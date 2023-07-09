@@ -1,5 +1,5 @@
 'use client';
-import { useWhisper } from '@chengsokdara/use-whisper';
+import { useWhisper } from '@tmacc/use-speech-to-text';
 import { useEffect, useState } from 'react';
 import { useChatCompletion } from '@/hooks/useChatCompletion';
 import { useMessageLog } from '@/hooks/useMessageLog';
