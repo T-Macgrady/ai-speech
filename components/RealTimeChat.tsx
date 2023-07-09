@@ -3,6 +3,7 @@ import { useWhisper } from '../../use-whisper/lib/index.js';
 import { useEffect, useState } from 'react';
 import { useChatCompletion } from '@/hooks/useChatCompletion';
 import { useMessageLog } from '@/hooks/useMessageLog';
+import useText2Speech from '@/hooks/useText2Speech';
 
 export default function RealTimeChat() {
   const {
@@ -16,6 +17,7 @@ export default function RealTimeChat() {
 
   const [completion, setCompletion] = useState('');
   const { getCompletion } = useChatCompletion();
+  const { speak } = useText2Speech();
 
   const onWhisperedCallback = async (text: string) => {
     const newMessages = userSay(text);
@@ -24,13 +26,19 @@ export default function RealTimeChat() {
       model: 'gpt-3.5-turbo-16k',
       messages: newMessages,
     });
-    assistantSay(complete);
-    setCompletion(complete);
-    console.log('onWhisperedCallback', text, complete);
+    const { lang, text: cleanText } = extractLangAndClean(complete);
+    assistantSay(cleanText);
+    setCompletion(cleanText);
+    speak(cleanText, {
+      lang,
+    });
+    console.log('onWhisperedCallback', text, cleanText);
   };
 
   useEffect(() => {
-    systemSay('hello~');
+    systemSay(
+      '1.你作为一个人工智能助手，解决用户的各种问题；2.用户使用哪种语言提问你就使用对应语言回答，除非用户让你使用特定语言回答；3.每次响应最前面返回当前语言对应的 BCP 47 语言标签规范的lang，比如zh-CN、en-US，用<lang>标签包裹lang，之后是响应内容，示例：<lang>zh-CN</lang>中文响应',
+    );
   }, []);
 
   const {
@@ -95,4 +103,24 @@ export default function RealTimeChat() {
       </ul>
     </div>
   );
+}
+
+function extractLangAndClean(text: string): {
+  lang: string;
+  text: string;
+} {
+  const regex = /^<lang>(.*?)<\/lang>/;
+  const match = regex.exec(text);
+
+  if (match) {
+    return {
+      lang: match[1],
+      text: text.replace(regex, ''),
+    };
+  }
+
+  return {
+    lang: 'en-US',
+    text,
+  };
 }
