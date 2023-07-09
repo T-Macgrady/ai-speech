@@ -1,5 +1,5 @@
 'use client';
-import { useWhisper } from '../../use-whisper/lib/index.js';
+import { useWhisper } from '@chengsokdara/use-whisper';
 import { useEffect, useState } from 'react';
 import { useChatCompletion } from '@/hooks/useChatCompletion';
 import { useMessageLog } from '@/hooks/useMessageLog';
