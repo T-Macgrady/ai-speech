@@ -1,7 +1,7 @@
 // useText2Speech hook
 
 import { useEffect, useState } from 'react';
-import ibmText2Speech from 'watson-speech/text-to-speech/index';
+// import ibmText2Speech from 'watson-speech/text-to-speech/index';
 
 enum Type {
   WEB_API = 'webapi',
@@ -78,11 +78,11 @@ async function webapiSpeak(
 
 // 调用ibm的语音合成接口
 function ibmSpeak(text: string, options: { lang: string }) {
-  ibmText2Speech.synthesize({
-    text,
-    autoPlay: true,
-    voice: 'en-US_AllisonVoice',
-  });
+  // ibmText2Speech.synthesize({
+  //   text,
+  //   autoPlay: true,
+  //   voice: 'en-US_AllisonVoice',
+  // });
 }
 
 // 调用百度的语音合成接口
@@ -115,7 +115,7 @@ async function elevenLabsSpeak(
     1;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'xi-api-key': '8f1d557f9cbb41f81314b5353a16c84c'
+    'xi-api-key': '8f1d557f9cbb41f81314b5353a16c84c',
   };
   const data = {
     text,
