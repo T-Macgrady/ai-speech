@@ -19,22 +19,6 @@ export default function RealTimeChat() {
   const { getCompletion } = useChatCompletion();
   const { speak } = useText2Speech();
 
-  const onWhisperedCallback = async (text: string) => {
-    const newMessages = userSay(text);
-    userSay(text);
-    const complete = await getCompletion(text, {
-      model: 'gpt-3.5-turbo-16k',
-      messages: newMessages,
-    });
-    const { lang, text: cleanText } = extractLangAndClean(complete);
-    assistantSay(cleanText);
-    setCompletion(cleanText);
-    speak(cleanText, {
-      lang,
-    });
-    console.log('onWhisperedCallback', text, cleanText);
-  };
-
   useEffect(() => {
     systemSay(
       '1.你作为一个人工智能助手，解决用户的各种问题；2.用户使用哪种语言提问你就使用对应语言回答，除非用户让你使用特定语言回答；3.每次响应最前面返回当前语言对应的 BCP 47 语言标签规范的lang，比如zh-CN、en-US，用<lang>标签包裹lang，之后是响应内容，示例：<lang>zh-CN</lang>中文响应',
@@ -57,8 +41,53 @@ export default function RealTimeChat() {
     nonStop: true, // keep recording as long as the user is speaking
     stopTimeout: 2000, // auto stop after 2 seconds
     timeSlice: 1000, // 1 second
-    whisperConfig: {},
-    onWhisperedCallback,
+    whisperConfig: {
+      language: '',
+    },
+    onSpeakingCallback: (isSpeaking: boolean) => {
+      console.log(
+        'onSpeakingCallback',
+        isSpeaking,
+        recording,
+        speaking,
+        transcribing,
+      );
+      if (!isSpeaking) return;
+
+      if (!recording && !speaking && !transcribing) {
+        startRecording();
+        console.log('--startRecording--');
+      }
+    },
+    onWhisperedCallback: async (text: string) => {
+      if (
+        !text ||
+        ['Thanks for watching!', 'Thank you for watching!', 'You'].includes(
+          text,
+        )
+      )
+        return;
+      const newMessages = userSay(text);
+      userSay(text);
+      console.error('userSay-----', text);
+      const completion = await getCompletion(text, {
+        model: 'gpt-3.5-turbo-16k',
+        messages: newMessages,
+      });
+      const { lang, text: realCompletion } = extractLangAndClean(completion);
+      assistantSay(realCompletion);
+      setCompletion(realCompletion);
+      console.error('assistantSay-----', realCompletion);
+
+      await speak(realCompletion, {
+        lang,
+      });
+
+      // if (!recording && !speaking && !transcribing) {
+      //   startRecording();
+      //   console.log('--startRecording--');
+      // }
+    },
   });
 
   return (
@@ -94,7 +123,7 @@ export default function RealTimeChat() {
       <p>lastAssistantMessage: {lastAssistantMessage}</p>
       <h2 className='text-2xl font-bold my-4'>对话历史</h2>
       <ul>
-        {messageLog.map((message, index) => (
+        {messageLog.reverse().map((message, index) => (
           <li key={index} className='mb-2'>
             <span className='font-bold'>{message.role}: </span>
             <span>{message.content}</span>

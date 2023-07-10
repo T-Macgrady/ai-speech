@@ -16,7 +16,7 @@ export default function useText2Speech(
   config: {
     type: Type;
   } = {
-    type: Type.ELEVEN_LABS,
+    type: Type.WEB_API,
   },
 ) {
   const [isSupportWebApi, setIsSupportWebApi] = useState(false);
@@ -31,7 +31,7 @@ export default function useText2Speech(
     }
   }, []);
 
-  const speak = (
+  const speak = async (
     text: string,
     options: { lang: string } = {
       lang: 'en-US',
@@ -39,18 +39,22 @@ export default function useText2Speech(
   ) => {
     console.log('--speak--', text, options, config);
     const speckAction = {
-      [Type.WEB_API]: () => {
-        webapiSpeak(text, options).catch(() => elevenLabsSpeak(text, options));
+      [Type.WEB_API]: async () => {
+        await webapiSpeak(text, options).catch(() =>
+          elevenLabsSpeak(text, options),
+        );
       },
-      [Type.ELEVEN_LABS]: () => {
-        elevenLabsSpeak(text, options).catch(() => webapiSpeak(text, options));
+      [Type.ELEVEN_LABS]: async () => {
+        await elevenLabsSpeak(text, options).catch(() =>
+          webapiSpeak(text, options),
+        );
       },
       // todo support more
       [Type.IBM]: ibmSpeak,
       [Type.BAIDU]: baiduSpeak,
       [Type.GOOGLE]: googleSpeak,
     };
-    speckAction[config.type](text, options);
+    await speckAction[config.type](text, options);
   };
 
   return { speak, isSupportWebApi, langs };
@@ -67,7 +71,9 @@ async function webapiSpeak(
   return new Promise<void>((resolve, reject) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = options.lang;
-    utterance.onerror = reject;
+    utterance.onerror = (e) => {
+      reject('webapi speak error:' + e);
+    };
     utterance.onstart = () => {};
     utterance.onend = () => {
       resolve();
@@ -77,7 +83,7 @@ async function webapiSpeak(
 }
 
 // 调用ibm的语音合成接口
-function ibmSpeak(text: string, options: { lang: string }) {
+async function ibmSpeak(text: string, options: { lang: string }) {
   // ibmText2Speech.synthesize({
   //   text,
   //   autoPlay: true,
@@ -86,10 +92,10 @@ function ibmSpeak(text: string, options: { lang: string }) {
 }
 
 // 调用百度的语音合成接口
-function baiduSpeak(text: string, options: { lang: string }) {}
+async function baiduSpeak(text: string, options: { lang: string }) {}
 
 // 调用google的语音合成接口
-function googleSpeak(text: string, options: { lang: string }) {
+async function googleSpeak(text: string, options: { lang: string }) {
   const tss = new (window as any).GoogleTTS('zh-CN');
   tss.play(text, options.lang);
 }
@@ -104,7 +110,7 @@ function googleSpeak(text: string, options: { lang: string }) {
 async function elevenLabsSpeak(
   text: string,
   options: { lang: string },
-): Promise<ArrayBuffer | null> {
+): Promise<void> {
   const voice = '21m00Tcm4TlvDq8ikWAM';
   const url =
     'https://api.elevenLabs.io' +
@@ -127,19 +133,26 @@ async function elevenLabsSpeak(
     body: JSON.stringify(data),
   });
 
-  playAudioStream(response);
-
-  return response.arrayBuffer();
+  await playAudioStream(response).catch((err) => {
+    console.log('playAudioStream-error', err);
+  });
 }
 
 function playAudioStream(response: Response) {
-  const contentType = response.headers.get('Content-Type');
+  return new Promise<void>((resolve, reject) => {
+    const contentType = response.headers.get('Content-Type');
 
-  response.arrayBuffer().then((buffer) => {
-    const audioBlob = new Blob([buffer], { type: contentType });
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
+    response.arrayBuffer().then((buffer) => {
+      const audioBlob = new Blob([buffer], { type: contentType });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
 
-    audio.play();
+      audio.onended = () => {
+        console.log('audio.onended-----');
+        resolve();
+      };
+      audio.onerror = reject;
+      audio.play();
+    });
   });
 }
