@@ -115,6 +115,7 @@ async function elevenLabsSpeak(
     1;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'xi-api-key': '8f1d557f9cbb41f81314b5353a16c84c'
   };
   const data = {
     text,
