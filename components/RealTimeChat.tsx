@@ -146,19 +146,23 @@ export default function RealTimeChat() {
       )
         return;
       const newMessages = userSay(text);
-      console.error('userSay-----', text);
-      const completion = await getCompletion(text, {
+      console.error('userSay-----', text, newMessages, messageLog);
+      const completionObj = await getCompletion(text, {
         model: 'gpt-3.5-turbo-16k',
         messages: newMessages,
       });
+      if (!completionObj) return;
+      const { content: completion, created } = completionObj;
       const { lang, text: realCompletion } = extractLangAndClean(completion);
-      assistantSay(realCompletion);
+      assistantSay(realCompletion, created);
       setCompletion(realCompletion);
       console.error('assistantSay-----', realCompletion);
 
       await speak(realCompletion, {
-        lang,
+        lang: lang || currentLang,
       });
+      lang && setCurrentLang(lang);
+      console.log('--speak-end----');
 
       // if (!recording && !speaking && !transcribing) {
       //   startRecording();
@@ -180,36 +184,39 @@ export default function RealTimeChat() {
         <p>isSpeeching: {String(isSpeeching)}</p>
         <p>isTranscribing: {String(isTranscribing)}</p>
         <p>recognizeText Text: {recognizeText}</p>
-        <div className='flex space-x-4 flex-column'>
+        <div className='flex space-x-4'>
           <button
-            className='bg-blue-500 text-white py-2 px-4 rounded'
+            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
             onClick={() => startRecording()}
           >
-            startRecording
+            start
           </button>
           <button
-            className='bg-blue-500 text-white py-2 px-4 rounded'
-            onClick={() => startSpeech2text()}
-          >
-            startSpeech2text
-          </button>
-          <button
-            className='bg-blue-500 text-white py-2 px-4 rounded'
-            onClick={() => stopSpeech2text()}
-          >
-            startSpeech2text
-          </button>
-          <button
-            className='bg-blue-500 text-white py-2 px-4 rounded'
+            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
             onClick={() => pauseRecording()}
           >
             Pause
           </button>
           <button
-            className='bg-blue-500 text-white py-2 px-4 rounded'
+            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
             onClick={() => stopRecording()}
           >
             Stop
+          </button>
+        </div>
+        <h1>speech2text</h1>
+        <div className='flex space-x-4'>
+          <button
+            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
+            onClick={() => startSpeech2text()}
+          >
+            start
+          </button>
+          <button
+            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
+            onClick={() => stopSpeech2text()}
+          >
+            stop
           </button>
           <button
             className='bg-blue-500 text-white py-2 px-4 rounded'
