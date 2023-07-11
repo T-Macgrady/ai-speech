@@ -5,7 +5,7 @@ import { useChatCompletion } from '@/hooks/useChatCompletion';
 import { useMessageLog } from '@/hooks/useMessageLog';
 import useText2Speech from '@/hooks/useText2Speech';
 import useSpeech2Text from '@/hooks/useSpeech2Text';
-import { useSpeaking } from '@/hooks/useSpeaking';
+// import { useSpeaking } from '@/hooks/useSpeaking';
 import ClientOnly from './ClientOnly';
 
 export default function RealTimeChat() {
@@ -73,23 +73,23 @@ export default function RealTimeChat() {
     // },
   });
 
-  const { isSpeaking, restart, reset, init } = useSpeaking({
-    onSpeaking(speaking) {
-      console.log('--onspeaking--', speaking, isSpeeching, isTranscribing);
-      if (speaking) {
-        console.error('--startSpeech2text--');
-        // reset();
-        // startSpeech2text();
-      }
-      // if (speaking && !isTranscribing && !isSpeeching) {
-      //   startSpeech2text();
-      //   console.error('--startSpeech2text--');
-      // }
-    },
-  });
+  // const { isSpeaking, restart, reset, init } = useSpeaking({
+  //   onSpeaking(speaking) {
+  //     console.log('--onspeaking--', speaking, isSpeeching, isTranscribing);
+  //     if (speaking) {
+  //       console.error('--startSpeech2text--');
+  //       // reset();
+  //       // startSpeech2text();
+  //     }
+  //     // if (speaking && !isTranscribing && !isSpeeching) {
+  //     //   startSpeech2text();
+  //     //   console.error('--startSpeech2text--');
+  //     // }
+  //   },
+  // });
 
   useEffect(() => {
-    console.log('--useEffect--', isSpeaking, isTranscribing, isSpeeching);
+    console.log('--useEffect--', isTranscribing, isSpeeching);
     // if (isSpeaking) return;
     // setTimeout(() => {
     // if (!isTranscribing && !isSpeeching) {
@@ -180,7 +180,7 @@ export default function RealTimeChat() {
         <p>Transcribing: {String(transcribing)}</p>
         <p>Transcribed Text: {transcript.text}</p>
         <p>lastUserMessage Text: {lastUserMessage}</p>
-        <p>isSpeaking: {String(isSpeaking)}</p>
+        {/* <p>isSpeaking: {String(isSpeaking)}</p> */}
         <p>isSpeeching: {String(isSpeeching)}</p>
         <p>isTranscribing: {String(isTranscribing)}</p>
         <p>recognizeText Text: {recognizeText}</p>
