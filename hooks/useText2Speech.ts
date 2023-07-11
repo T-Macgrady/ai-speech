@@ -1,7 +1,17 @@
-// useText2Speech hook
+'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 // import ibmText2Speech from 'watson-speech/text-to-speech/index';
+import * as mespeak from 'mespeak';
+import { useTts } from 'tts-react';
+// import { Controller } from 'tts-react/dist/controller.js';
+
+import type { TTSHookProps } from 'tts-react';
+import { Tts } from '@/utils/Tts';
+
+type SpeakProps = Pick<TTSHookProps, 'children'>;
+
+let ifMeSpeakInit = false;
 
 enum Type {
   WEB_API = 'webapi',
@@ -19,15 +29,22 @@ export default function useText2Speech(
     type: Type.WEB_API,
   },
 ) {
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const [isSupportWebApi, setIsSupportWebApi] = useState(false);
   const [langs, setLangs] = useState<string[]>([]);
+  // const [_text, setText] = useState('hello world');
+  const [isSpeeching, setIsSpeeching] = useState(false);
+
+  const { play } = useTts({
+    children: '',
+  });
 
   useEffect(() => {
-    const isSupport = checkIfSupportWebApi();
-    setIsSupportWebApi(isSupport);
-    if (isSupport) {
-      const voices = window.speechSynthesis.getVoices();
-      setLangs(voices.map((voice) => voice.lang));
+    const isSupportWebApi = checkIfSupportWebApi();
+    setIsSupportWebApi(isSupportWebApi);
+    if (isSupportWebApi) {
+      voicesRef.current = window.speechSynthesis.getVoices();
+      setLangs(voicesRef.current.map((voice) => voice.lang));
     }
   }, []);
 
@@ -37,27 +54,55 @@ export default function useText2Speech(
       lang: 'en-US',
     },
   ) => {
-    console.log('--speak--', text, options, config);
-    const speckAction = {
-      [Type.WEB_API]: async () => {
-        await webapiSpeak(text, options).catch(() =>
-          elevenLabsSpeak(text, options),
-        );
-      },
-      [Type.ELEVEN_LABS]: async () => {
-        await elevenLabsSpeak(text, options).catch(() =>
-          webapiSpeak(text, options),
-        );
-      },
-      // todo support more
-      [Type.IBM]: ibmSpeak,
-      [Type.BAIDU]: baiduSpeak,
-      [Type.GOOGLE]: googleSpeak,
-    };
-    await speckAction[config.type](text, options);
+    try {
+      setIsSpeeching(true);
+      console.log('--speak--', text, options, config);
+      const speckAction = {
+        [Type.WEB_API]: async () => {
+          await webapiSpeak(text, options).catch((e) => {
+            console.error('webapi speak error:', e);
+            elevenLabsSpeak(text, options);
+          });
+        },
+        [Type.ELEVEN_LABS]: async () => {
+          await elevenLabsSpeak(text, options).catch(() =>
+            webapiSpeak(text, options),
+          );
+        },
+        // todo support more
+        [Type.IBM]: ibmSpeak,
+        [Type.BAIDU]: baiduSpeak,
+        [Type.GOOGLE]: googleSpeak,
+      };
+      // setText(text);
+      // setTimeout(() => {
+      //   play();
+      // }, 1000);
+      // play();
+      // await speckAction[config.type](text, options);
+
+      const voice =
+        voicesRef.current.find((v) => v.lang === options.lang) ||
+        voicesRef.current[0];
+      const tts = new Tts({
+        voice,
+      });
+      tts.text = text;
+      tts.volume = 1;
+      tts.lang = options.lang;
+      console.log('--tts---', tts.lang, voice);
+      play();
+      setTimeout(() => {
+        tts.play();
+      }, 50);
+    } catch (e) {
+      console.error('speak error:', e);
+    } finally {
+      setIsSpeeching(false);
+    }
   };
 
-  return { speak, isSupportWebApi, langs };
+  return { speak, isSpeeching, isSupportWebApi, langs };
 }
 
 // check if support SpeechSynthesisUtterance
@@ -71,6 +116,12 @@ async function webapiSpeak(
   return new Promise<void>((resolve, reject) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = options.lang;
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice =
+      voices.find((voice) => {
+        return voice.lang === options.lang;
+      }) || voices[0];
+    console.log(utterance.voice, voices);
     utterance.onerror = (e) => {
       reject('webapi speak error:' + e);
     };
@@ -79,6 +130,15 @@ async function webapiSpeak(
       resolve();
     };
     window.speechSynthesis.speak(utterance);
+    // if (!ifMeSpeakInit) {
+    //   mespeak.loadConfig(require('mespeak/src/mespeak_config.json'));
+    //   mespeak.loadVoice(require('mespeak/voices/en/en-wm.json'));
+    //   ifMeSpeakInit = true;
+    // }
+    // console.error('webapi speak', text, options);
+    // mespeak.speak(text, { pitch: 45, speed: 140, Amplitude: 90 });
+    // resolve();
+    // window.responsiveVoice.speak("Hello, this is a test.")
   });
 }
 

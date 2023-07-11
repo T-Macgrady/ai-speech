@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { useChatCompletion } from '@/hooks/useChatCompletion';
 import { useMessageLog } from '@/hooks/useMessageLog';
 import useText2Speech from '@/hooks/useText2Speech';
+import useSpeech2Text from '@/hooks/useSpeech2Text';
+import { useSpeaking } from '@/hooks/useSpeaking';
+import ClientOnly from './ClientOnly';
 
 export default function RealTimeChat() {
   const {
@@ -15,15 +18,90 @@ export default function RealTimeChat() {
     assistantSay,
   } = useMessageLog();
 
+  const [currentLang, setCurrentLang] = useState('en-US');
   const [completion, setCompletion] = useState('');
   const { getCompletion } = useChatCompletion();
-  const { speak } = useText2Speech();
+  const { speak, isSpeeching } = useText2Speech();
 
   useEffect(() => {
     systemSay(
       '1.你作为一个人工智能助手，解决用户的各种问题；2.用户使用哪种语言提问你就使用对应语言回答，除非用户让你使用特定语言回答；3.每次响应最前面返回当前语言对应的 BCP 47 语言标签规范的lang，比如zh-CN、en-US，用<lang>标签包裹lang，之后是响应内容，示例：<lang>zh-CN</lang>中文响应',
     );
+    // init();
   }, []);
+
+  const {
+    isTranscribing,
+    text: recognizeText,
+    start: startSpeech2text,
+    stop: stopSpeech2text,
+    abort: abortSpeech2text,
+  } = useSpeech2Text({
+    async onRecognize(e) {
+      console.log('onRecognize', e);
+      if (!e.isFinal || !e.value) return;
+      // stopSpeech2text();
+      const text = e.value;
+      const newMessages = userSay(text);
+      console.error('userSay-----', text, newMessages, messageLog);
+      const completionObj = await getCompletion(text, {
+        model: 'gpt-3.5-turbo-16k',
+        messages: newMessages,
+      });
+      if (!completionObj) return;
+      const { content: completion, created } = completionObj;
+      const { lang, text: realCompletion } = extractLangAndClean(completion);
+      assistantSay(realCompletion, created);
+      setCompletion(realCompletion);
+      console.error('assistantSay-----', realCompletion);
+
+      await speak(realCompletion, {
+        lang: lang || currentLang,
+      });
+      lang && setCurrentLang(lang);
+      console.log('--speak-end----');
+      // startSpeech2text();
+      // init();
+      // setTimeout(() => {
+      //   restart();
+      // }, 3000);
+    },
+    // async onEnd(e) {
+    //   console.log('onEnd', e);
+
+    //   // startSpeech2text();
+    // },
+  });
+
+  const { isSpeaking, restart, reset, init } = useSpeaking({
+    onSpeaking(speaking) {
+      console.log('--onspeaking--', speaking, isSpeeching, isTranscribing);
+      if (speaking) {
+        console.error('--startSpeech2text--');
+        // reset();
+        // startSpeech2text();
+      }
+      // if (speaking && !isTranscribing && !isSpeeching) {
+      //   startSpeech2text();
+      //   console.error('--startSpeech2text--');
+      // }
+    },
+  });
+
+  useEffect(() => {
+    console.log('--useEffect--', isSpeaking, isTranscribing, isSpeeching);
+    // if (isSpeaking) return;
+    // setTimeout(() => {
+    // if (!isTranscribing && !isSpeeching) {
+    //   init();
+    //   console.error('--init--');
+    // }
+    // }, 1000);
+    // } else {
+    //   console.log('--reset--');
+    //   reset();
+    // }
+  }, [isTranscribing, isSpeeching]);
 
   const {
     recording,
@@ -68,7 +146,6 @@ export default function RealTimeChat() {
       )
         return;
       const newMessages = userSay(text);
-      userSay(text);
       console.error('userSay-----', text);
       const completion = await getCompletion(text, {
         model: 'gpt-3.5-turbo-16k',
@@ -91,46 +168,75 @@ export default function RealTimeChat() {
   });
 
   return (
-    <div className='p-4'>
-      <h2 className='text-2xl font-bold mb-4'>转录</h2>
-      <p>Recording: {String(recording)}</p>
-      <p>Speaking: {String(speaking)}</p>
-      <p>Transcribing: {String(transcribing)}</p>
-      <p>Transcribed Text: {transcript.text}</p>
-      <p>lastUserMessage Text: {lastUserMessage}</p>
-      <div className='flex space-x-4'>
-        <button
-          className='bg-blue-500 text-white py-2 px-4 rounded'
-          onClick={() => startRecording()}
-        >
-          Start
-        </button>
-        <button
-          className='bg-blue-500 text-white py-2 px-4 rounded'
-          onClick={() => pauseRecording()}
-        >
-          Pause
-        </button>
-        <button
-          className='bg-blue-500 text-white py-2 px-4 rounded'
-          onClick={() => stopRecording()}
-        >
-          Stop
-        </button>
+    <ClientOnly>
+      <div className='p-4'>
+        <h2 className='text-2xl font-bold mb-4'>转录</h2>
+        <p>Recording: {String(recording)}</p>
+        <p>Speaking: {String(speaking)}</p>
+        <p>Transcribing: {String(transcribing)}</p>
+        <p>Transcribed Text: {transcript.text}</p>
+        <p>lastUserMessage Text: {lastUserMessage}</p>
+        <p>isSpeaking: {String(isSpeaking)}</p>
+        <p>isSpeeching: {String(isSpeeching)}</p>
+        <p>isTranscribing: {String(isTranscribing)}</p>
+        <p>recognizeText Text: {recognizeText}</p>
+        <div className='flex space-x-4 flex-column'>
+          <button
+            className='bg-blue-500 text-white py-2 px-4 rounded'
+            onClick={() => startRecording()}
+          >
+            startRecording
+          </button>
+          <button
+            className='bg-blue-500 text-white py-2 px-4 rounded'
+            onClick={() => startSpeech2text()}
+          >
+            startSpeech2text
+          </button>
+          <button
+            className='bg-blue-500 text-white py-2 px-4 rounded'
+            onClick={() => stopSpeech2text()}
+          >
+            startSpeech2text
+          </button>
+          <button
+            className='bg-blue-500 text-white py-2 px-4 rounded'
+            onClick={() => pauseRecording()}
+          >
+            Pause
+          </button>
+          <button
+            className='bg-blue-500 text-white py-2 px-4 rounded'
+            onClick={() => stopRecording()}
+          >
+            Stop
+          </button>
+          <button
+            className='bg-blue-500 text-white py-2 px-4 rounded'
+            // onClick={() => speak('你好，你叫什么名字，你住在哪里，你是谁，吃饭了吗')}
+            onClick={() => {
+              const utterance = new SpeechSynthesisUtterance('hello yoyo');
+              console.log('utterance', utterance);
+              window.speechSynthesis.speak(utterance);
+            }}
+          >
+            Speak
+          </button>
+        </div>
+        <h2 className='text-2xl font-bold my-4'>响应</h2>
+        <p>complete: {completion}</p>
+        <p>lastAssistantMessage: {lastAssistantMessage}</p>
+        <h2 className='text-2xl font-bold my-4'>对话历史</h2>
+        <ul>
+          {messageLog.map((message, index) => (
+            <li key={message.created} className='mb-2'>
+              <span className='font-bold'>{message.role}: </span>
+              <span>{message.content}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <h2 className='text-2xl font-bold my-4'>响应</h2>
-      <p>complete: {completion}</p>
-      <p>lastAssistantMessage: {lastAssistantMessage}</p>
-      <h2 className='text-2xl font-bold my-4'>对话历史</h2>
-      <ul>
-        {messageLog.reverse().map((message, index) => (
-          <li key={index} className='mb-2'>
-            <span className='font-bold'>{message.role}: </span>
-            <span>{message.content}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    </ClientOnly>
   );
 }
 
@@ -149,7 +255,7 @@ function extractLangAndClean(text: string): {
   }
 
   return {
-    lang: 'en-US',
+    lang: '',
     text,
   };
 }

@@ -27,9 +27,18 @@ export function useChatCompletion(
   },
 ) {
   const [error, setError] = useState(null);
-  const [completion, setCompletion] = useState<string>('');
+  const [completion, setCompletion] = useState<{
+    content: string;
+    created: number;
+  }>();
 
-  const getCompletion = async (prompt: string, config: ChatCompletionConfig) => {
+  const getCompletion = async (
+    prompt: string,
+    config: ChatCompletionConfig,
+  ): Promise<{
+    content: string;
+    created: number;
+  } | void> => {
     const url = initConfig.url;
     const apikey = initConfig.apikey;
     const model = initConfig.model;
@@ -63,9 +72,10 @@ export function useChatCompletion(
       setError(data.error);
       return;
     }
-    const res = data?.choices[0]?.message?.content || '';
-    setCompletion(res);
-    return res;
+    const content = data?.choices[0]?.message?.content || '';
+    const resData = { created: data.created, content };
+    setCompletion(resData);
+    return resData;
   };
 
   return {
