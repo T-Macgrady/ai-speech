@@ -2,22 +2,17 @@
 
 import { Tts } from '@/utils/Tts';
 import { useEffect, useRef, useState } from 'react';
-import { useTts } from 'tts-react';
 
 // import ibmText2Speech from 'watson-speech/text-to-speech/index';
-// import * as mespeak from 'mespeak';
-// import { Controller } from 'tts-react/dist/controller.js';
+import * as mespeak from 'mespeak';
 
-// import type { TTSHookProps } from 'tts-react';
-
-// type SpeakProps = Pick<TTSHookProps, 'children'>;
-
-// let ifMeSpeakInit = false;
+let ifMeSpeakInit = false;
 
 enum Type {
   WEB_API = 'webapi',
   ELEVEN_LABS = 'elevenLabs',
   TTS = 'tts',
+  ME_SPEAK = 'meSpeak',
   // todo support more
   IBM = 'ibm',
   BAIDU = 'baidu',
@@ -39,12 +34,7 @@ export default function useText2Speech(
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const [isSupportWebApi, setIsSupportWebApi] = useState(false);
   const [langs, setLangs] = useState<string[]>([]);
-  // const [_text, setText] = useState('hello world');
   const [isSpeeching, setIsSpeeching] = useState(false);
-
-  const { play } = useTts({
-    children: '',
-  });
 
   useEffect(() => {
     const isSupportWebApi = checkIfSupportWebApi();
@@ -65,31 +55,22 @@ export default function useText2Speech(
       setIsSpeeching(true);
       console.log('--speak--', text, options, config);
       const speckAction = {
-        [Type.WEB_API]: async () => {
-          await webapiSpeak(text, options).catch((e) => {
-            console.error('webapi speak error:', e);
-            elevenLabsSpeak(text);
-          });
-        },
+        [Type.WEB_API]: webapiSpeak,
         [Type.TTS]: TTSSpeak,
-        [Type.ELEVEN_LABS]: async () => {
-          await elevenLabsSpeak(text).catch(() => webapiSpeak(text, options));
-        },
+        [Type.ELEVEN_LABS]: elevenLabsSpeak,
+        [Type.ME_SPEAK]: meSpeak,
         // todo support more
         // [Type.IBM]: ibmSpeak,
         // [Type.BAIDU]: baiduSpeak,
         [Type.GOOGLE]: googleSpeak,
       };
-      // setText(text);
-      // setTimeout(() => {
-      //   play();
-      // }, 1000);
-      // play();
       const voice =
         voicesRef.current.find((v) => v.lang === options.lang) ||
         voicesRef.current[0];
-      play();
-      await speckAction[config.type](text, { ...options, voice });
+
+      await speckAction[config.type](text, { ...options, voice }).catch(() =>
+        meSpeak(text, options),
+      );
     } catch (e) {
       console.error('speak error:', e);
     } finally {
@@ -125,17 +106,25 @@ async function webapiSpeak(
       resolve();
     };
     window.speechSynthesis.speak(utterance);
-    // if (!ifMeSpeakInit) {
-    //   mespeak.loadConfig(require('mespeak/src/mespeak_config.json'));
-    //   mespeak.loadVoice(require('mespeak/voices/en/en-wm.json'));
-    //   ifMeSpeakInit = true;
-    // }
-    // console.error('webapi speak', text, options);
-    // mespeak.speak(text, { pitch: 45, speed: 140, Amplitude: 90 });
-    // resolve();
+  });
+}
+
+async function meSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
+  return new Promise<void>(async (resolve) => {
+    if (!ifMeSpeakInit) {
+      const meSpeakConfig = await import('mespeak/src/mespeak_config.json');
+      const meSpeakVoice = await import('mespeak/voices/en/en-wm.json');
+      mespeak.loadConfig(meSpeakConfig);
+      mespeak.loadVoice(meSpeakVoice);
+      ifMeSpeakInit = true;
+    }
+    console.error('webapi speak', text, options);
+    mespeak.speak(text, { pitch: 45, speed: 140, Amplitude: 90 });
+    resolve();
     // window.responsiveVoice.speak("Hello, this is a test.")
   });
 }
+
 async function TTSSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
   return new Promise<void>((resolve) => {
     const tts = new Tts({
