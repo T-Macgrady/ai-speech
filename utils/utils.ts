@@ -1,16 +1,16 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
-const punctuationRgx = /[^\P{P}'/-]+/gu
+const punctuationRgx = /[^\P{P}'/-]+/gu;
 const isStringOrNumber = (value: ReactNode): boolean => {
-  return typeof value === 'string' || typeof value === 'number'
-}
+  return typeof value === 'string' || typeof value === 'number';
+};
 const stripPunctuation = (text: string): string => {
-  return text.replace(punctuationRgx, '')
-}
+  return text.replace(punctuationRgx, '');
+};
 const isPunctuation = (text: string): boolean => {
-  const trimmed = text.trim()
+  const trimmed = text.trim();
 
-  return punctuationRgx.test(trimmed) && trimmed.length === 1
-}
+  return punctuationRgx.test(trimmed) && trimmed.length === 1;
+};
 
-export { isStringOrNumber, stripPunctuation, isPunctuation, punctuationRgx }
+export { isStringOrNumber, stripPunctuation, isPunctuation, punctuationRgx };
