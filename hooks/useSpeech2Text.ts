@@ -95,7 +95,7 @@ const useSpeech2Text = ({
       voiceRecognition.current.start();
     } else {
       init();
-      voiceRecognition.current.start();
+      // voiceRecognition.current.start();
     }
   }, [init]);
   const abort = () => {

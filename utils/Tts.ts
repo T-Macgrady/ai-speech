@@ -49,8 +49,8 @@ class Tts extends EventTarget {
     marks: [],
   });
   private marks: PollySpeechMark[] = [];
-  private text = '';
-  private lang = '';
+  text = '';
+  // lang = '';
   private aborter = new AbortController();
   private initialized = false;
 
@@ -293,21 +293,21 @@ class Tts extends EventTarget {
     }
   }
 
-  get synthesizer(): Synthesizer {
-    return this.synthesizer;
-  }
+  // get synthesizer(): Synthesizer {
+  //   return this.synthesizer;
+  // }
 
-  get target(): Target {
-    return this.target;
-  }
+  // get target(): Target {
+  //   return this.target;
+  // }
 
-  set text(value: string) {
-    this.text = value;
+  // set text(value: string) {
+  //   this.text = value;
 
-    if (this.target instanceof SpeechSynthesisUtterance) {
-      this.target.text = value;
-    }
-  }
+  //   if (this.target instanceof SpeechSynthesisUtterance) {
+  //     this.target.text = value;
+  //   }
+  // }
 
   get paused(): boolean {
     return this.synthesizer.paused;

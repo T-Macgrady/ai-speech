@@ -33,7 +33,7 @@ export default function useText2Speech(
   config: {
     type: Type;
   } = {
-    type: Type.TTS,
+    type: Type.WEB_API,
   },
 ) {
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
