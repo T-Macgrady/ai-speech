@@ -1,8 +1,8 @@
 'use client';
 
+import { Tts } from '@/utils/Tts';
 import { useEffect, useRef, useState } from 'react';
 import { useTts } from 'tts-react';
-import { Tts } from '@/utils/Tts';
 
 // import ibmText2Speech from 'watson-speech/text-to-speech/index';
 // import * as mespeak from 'mespeak';
@@ -206,7 +206,7 @@ async function elevenLabsSpeak(text: string): Promise<void> {
 
 function playAudioStream(response: Response) {
   return new Promise<void>((resolve, reject) => {
-    const contentType = response.headers.get('Content-Type');
+    const contentType = response.headers.get('Content-Type') as string;
 
     response.arrayBuffer().then((buffer) => {
       const audioBlob = new Blob([buffer], { type: contentType });
