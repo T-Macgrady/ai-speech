@@ -28,14 +28,13 @@ export default function RealTimeChat() {
       '1.你作为一个人工智能助手，解决用户的各种问题；2.用户使用哪种语言提问你就使用对应语言回答，除非用户让你使用特定语言回答；3.每次响应最前面返回当前语言对应的 BCP 47 语言标签规范的lang，比如zh-CN、en-US，用<lang>标签包裹lang，之后是响应内容，示例：<lang>zh-CN</lang>中文响应',
     );
     // init();
-  }, []);
+  }, [systemSay]);
 
   const {
     isTranscribing,
     text: recognizeText,
     start: startSpeech2text,
     stop: stopSpeech2text,
-    abort: abortSpeech2text,
   } = useSpeech2Text({
     async onRecognize(e) {
       console.log('onRecognize', e);
@@ -235,7 +234,7 @@ export default function RealTimeChat() {
         <p>lastAssistantMessage: {lastAssistantMessage}</p>
         <h2 className='text-2xl font-bold my-4'>对话历史</h2>
         <ul>
-          {messageLog.map((message, index) => (
+          {messageLog.map((message) => (
             <li key={message.created} className='mb-2'>
               <span className='font-bold'>{message.role}: </span>
               <span>{message.content}</span>

@@ -1,32 +1,39 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-// import ibmText2Speech from 'watson-speech/text-to-speech/index';
-import * as mespeak from 'mespeak';
 import { useTts } from 'tts-react';
-// import { Controller } from 'tts-react/dist/controller.js';
-
-import type { TTSHookProps } from 'tts-react';
 import { Tts } from '@/utils/Tts';
 
-type SpeakProps = Pick<TTSHookProps, 'children'>;
+// import ibmText2Speech from 'watson-speech/text-to-speech/index';
+// import * as mespeak from 'mespeak';
+// import { Controller } from 'tts-react/dist/controller.js';
 
-let ifMeSpeakInit = false;
+// import type { TTSHookProps } from 'tts-react';
+
+// type SpeakProps = Pick<TTSHookProps, 'children'>;
+
+// let ifMeSpeakInit = false;
 
 enum Type {
   WEB_API = 'webapi',
   ELEVEN_LABS = 'elevenLabs',
+  TTS = 'tts',
   // todo support more
   IBM = 'ibm',
   BAIDU = 'baidu',
   GOOGLE = 'google',
 }
 
+type TTSOptions = {
+  lang: string;
+  voice?: SpeechSynthesisVoice;
+};
+
 export default function useText2Speech(
   config: {
     type: Type;
   } = {
-    type: Type.WEB_API,
+    type: Type.TTS,
   },
 ) {
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
@@ -50,7 +57,7 @@ export default function useText2Speech(
 
   const speak = async (
     text: string,
-    options: { lang: string } = {
+    options: TTSOptions = {
       lang: 'en-US',
     },
   ) => {
@@ -61,13 +68,12 @@ export default function useText2Speech(
         [Type.WEB_API]: async () => {
           await webapiSpeak(text, options).catch((e) => {
             console.error('webapi speak error:', e);
-            elevenLabsSpeak(text, options);
+            elevenLabsSpeak(text);
           });
         },
+        [Type.TTS]: TTSSpeak,
         [Type.ELEVEN_LABS]: async () => {
-          await elevenLabsSpeak(text, options).catch(() =>
-            webapiSpeak(text, options),
-          );
+          await elevenLabsSpeak(text).catch(() => webapiSpeak(text, options));
         },
         // todo support more
         [Type.IBM]: ibmSpeak,
@@ -79,22 +85,11 @@ export default function useText2Speech(
       //   play();
       // }, 1000);
       // play();
-      // await speckAction[config.type](text, options);
-
       const voice =
         voicesRef.current.find((v) => v.lang === options.lang) ||
         voicesRef.current[0];
-      const tts = new Tts({
-        voice,
-      });
-      tts.text = text;
-      tts.volume = 1;
-      tts.lang = options.lang;
-      console.log('--tts---', tts.lang, voice);
       play();
-      setTimeout(() => {
-        tts.play();
-      }, 50);
+      await speckAction[config.type](text, { ...options, voice });
     } catch (e) {
       console.error('speak error:', e);
     } finally {
@@ -111,7 +106,7 @@ const checkIfSupportWebApi = () => {
 };
 async function webapiSpeak(
   text: string,
-  options: { lang: string } = { lang: 'en-US' },
+  options: TTSOptions = { lang: 'en-US' },
 ) {
   return new Promise<void>((resolve, reject) => {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -141,9 +136,23 @@ async function webapiSpeak(
     // window.responsiveVoice.speak("Hello, this is a test.")
   });
 }
+async function TTSSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
+  return new Promise<void>((resolve) => {
+    const tts = new Tts({
+      voice: options.voice,
+    });
+    tts.text = text;
+    tts.volume = 1;
+    tts.lang = options.lang;
+    console.log('--tts---', tts.lang, options);
+
+    tts.play();
+    resolve();
+  });
+}
 
 // 调用ibm的语音合成接口
-async function ibmSpeak(text: string, options: { lang: string }) {
+async function ibmSpeak() {
   // ibmText2Speech.synthesize({
   //   text,
   //   autoPlay: true,
@@ -152,11 +161,11 @@ async function ibmSpeak(text: string, options: { lang: string }) {
 }
 
 // 调用百度的语音合成接口
-async function baiduSpeak(text: string, options: { lang: string }) {}
+async function baiduSpeak() {}
 
 // 调用google的语音合成接口
-async function googleSpeak(text: string, options: { lang: string }) {
-  const tss = new (window as any).GoogleTTS('zh-CN');
+async function googleSpeak(text: string, options: TTSOptions) {
+  const tss = new window.GoogleTTS('zh-CN');
   tss.play(text, options.lang);
 }
 
@@ -167,10 +176,7 @@ async function googleSpeak(text: string, options: { lang: string }) {
  * @param {Voice} [voice] The voice to be used for text-to-speech conversion. If not provided, the current voice will be used.
  * @returns {Promise<ArrayBuffer | null>} A promise that resolves to an ArrayBuffer containing the audio data, or null if the conversion fails.
  */
-async function elevenLabsSpeak(
-  text: string,
-  options: { lang: string },
-): Promise<void> {
+async function elevenLabsSpeak(text: string): Promise<void> {
   const voice = '21m00Tcm4TlvDq8ikWAM';
   const url =
     'https://api.elevenLabs.io' +
