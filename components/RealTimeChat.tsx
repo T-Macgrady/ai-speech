@@ -4,25 +4,44 @@ import { useMessageLog } from '@/hooks/useMessageLog';
 import useSpeech2Text from '@/hooks/useSpeech2Text';
 import useText2Speech from '@/hooks/useText2Speech';
 import { useWhisper } from '@tmacc/use-speech-to-text';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 // import { useSpeaking } from '@/hooks/useSpeaking';
 import { extractLangAndClean, getLang } from '@/utils/lang';
 import ClientOnly from './ClientOnly';
 
 export default function RealTimeChat() {
-  const {
-    messageLog,
-    lastUserMessage,
-    lastAssistantMessage,
-    systemSay,
-    userSay,
-    assistantSay,
-  } = useMessageLog();
+  const { messageLog, lastAssistantMessage, systemSay, userSay, assistantSay } =
+    useMessageLog();
 
   const [currentLang, setCurrentLang] = useState('en-US');
-  const [completion, setCompletion] = useState('');
   const { getCompletion } = useChatCompletion();
   const { speak, isSpeeching } = useText2Speech();
+
+  const getCompletionAndSpeak = useCallback(
+    async (text: string) => {
+      console.log('--getCompletion----', text);
+      const messages = userSay(text);
+
+      // getCompletion
+      const completionObj = await getCompletion(text, { messages });
+      if (!completionObj) return;
+      const { content, created } = completionObj;
+      const { lang, text: realCompletion } = extractLangAndClean(content);
+
+      assistantSay(realCompletion, created);
+
+      // speak
+      console.log('--speak-start----', realCompletion, lang, currentLang);
+      const computedLang = lang || getLang(realCompletion);
+      await speak(realCompletion, {
+        lang: computedLang || currentLang,
+      });
+      currentLang && setCurrentLang(currentLang);
+
+      console.log('--speak-end----');
+    },
+    [assistantSay, currentLang, getCompletion, speak, userSay],
+  );
 
   useEffect(() => {
     systemSay(
@@ -37,70 +56,22 @@ export default function RealTimeChat() {
     stop: stopSpeech2text,
   } = useSpeech2Text({
     async onRecognize(e) {
-      console.log('onRecognize', e);
       if (!e.isFinal || !e.value) return;
-      // stopSpeech2text();
       const text = e.value;
-      const newMessages = userSay(text);
-      console.error('userSay-----', text, newMessages, messageLog);
-      const completionObj = await getCompletion(text, {
-        model: 'gpt-3.5-turbo-16k',
-        messages: newMessages,
-      });
-      if (!completionObj) return;
-      const { content: completion, created } = completionObj;
-      const { lang, text: realCompletion } = extractLangAndClean(completion);
-      assistantSay(realCompletion, created);
-      setCompletion(realCompletion);
-      console.error('assistantSay-----', realCompletion);
 
-      await speak(realCompletion, {
-        lang: lang || getLang(realCompletion) || currentLang,
-      });
-      lang && setCurrentLang(lang);
-      console.log('--speak-end----');
-      // startSpeech2text();
-      // init();
-      // setTimeout(() => {
-      //   restart();
-      // }, 3000);
+      console.log('--onRecognize-end--', text);
+
+      stopSpeech2text();
+
+      await getCompletionAndSpeak(text);
+
+      startSpeech2text();
     },
-    // async onEnd(e) {
-    //   console.log('onEnd', e);
-
-    //   // startSpeech2text();
-    // },
+    onEnd() {
+      console.log('--onEnd--');
+      stopSpeech2text();
+    },
   });
-
-  // const { isSpeaking, restart, reset, init } = useSpeaking({
-  //   onSpeaking(speaking) {
-  //     console.log('--onspeaking--', speaking, isSpeeching, isTranscribing);
-  //     if (speaking) {
-  //       console.error('--startSpeech2text--');
-  //       // reset();
-  //       // startSpeech2text();
-  //     }
-  //     // if (speaking && !isTranscribing && !isSpeeching) {
-  //     //   startSpeech2text();
-  //     //   console.error('--startSpeech2text--');
-  //     // }
-  //   },
-  // });
-
-  useEffect(() => {
-    console.log('--useEffect--', isTranscribing, isSpeeching);
-    // if (isSpeaking) return;
-    // setTimeout(() => {
-    // if (!isTranscribing && !isSpeeching) {
-    //   init();
-    //   console.error('--init--');
-    // }
-    // }, 1000);
-    // } else {
-    //   console.log('--reset--');
-    //   reset();
-    // }
-  }, [isTranscribing, isSpeeching]);
 
   const {
     recording,
@@ -144,29 +115,8 @@ export default function RealTimeChat() {
         )
       )
         return;
-      const newMessages = userSay(text);
-      console.error('userSay-----', text, newMessages, messageLog);
-      const completionObj = await getCompletion(text, {
-        model: 'gpt-3.5-turbo-16k',
-        messages: newMessages,
-      });
-      if (!completionObj) return;
-      const { content: completion, created } = completionObj;
-      const { lang, text: realCompletion } = extractLangAndClean(completion);
-      assistantSay(realCompletion, created);
-      setCompletion(realCompletion);
-      console.error('assistantSay-----', realCompletion);
 
-      await speak(realCompletion, {
-        lang: lang || getLang(realCompletion) || currentLang,
-      });
-      lang && setCurrentLang(lang);
-      console.log('--speak-end----');
-
-      // if (!recording && !speaking && !transcribing) {
-      //   startRecording();
-      //   console.log('--startRecording--');
-      // }
+      await getCompletionAndSpeak(text);
     },
   });
 
@@ -174,15 +124,11 @@ export default function RealTimeChat() {
     <ClientOnly>
       <div className="p-4">
         <h2 className="text-2xl font-bold mb-4">转录</h2>
+        <h2 className="font-bold mb-4">chatgpt</h2>
         <p>Recording: {String(recording)}</p>
-        <p>Speaking: {String(speaking)}</p>
         <p>Transcribing: {String(transcribing)}</p>
+        <p>Speaking: {String(speaking)}</p>
         <p>Transcribed Text: {transcript.text}</p>
-        <p>lastUserMessage Text: {lastUserMessage}</p>
-        {/* <p>isSpeaking: {String(isSpeaking)}</p> */}
-        <p>isSpeeching: {String(isSpeeching)}</p>
-        <p>isTranscribing: {String(isTranscribing)}</p>
-        <p>recognizeText Text: {recognizeText}</p>
         <div className="flex space-x-4">
           <button
             className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
@@ -203,7 +149,14 @@ export default function RealTimeChat() {
             Stop
           </button>
         </div>
-        <h1>speech2text</h1>
+
+        <h2 className="font-bold mb-4">webapi</h2>
+
+        {/* <p>isSpeaking: {String(isSpeaking)}</p> */}
+        <p>isTranscribing: {String(isTranscribing)}</p>
+        <p>isSpeeching: {String(isSpeeching)}</p>
+        <p>recognizeText Text: {recognizeText}</p>
+
         <div className="flex space-x-4">
           <button
             className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
@@ -230,7 +183,6 @@ export default function RealTimeChat() {
           </button>
         </div>
         <h2 className="text-2xl font-bold my-4">响应</h2>
-        <p>complete: {completion}</p>
         <p>lastAssistantMessage: {lastAssistantMessage}</p>
         <h2 className="text-2xl font-bold my-4">对话历史</h2>
         <ul>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Tts } from '@/utils/Tts';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // import ibmText2Speech from 'watson-speech/text-to-speech/index';
 import * as mespeak from 'mespeak';
@@ -45,38 +45,41 @@ export default function useText2Speech(
     }
   }, []);
 
-  const speak = async (
-    text: string,
-    options: TTSOptions = {
-      lang: 'en-US',
-    },
-  ) => {
-    try {
-      setIsSpeeching(true);
-      console.log('--speak--', text, options, config);
-      const speckAction = {
-        [Type.WEB_API]: webapiSpeak,
-        [Type.TTS]: TTSSpeak,
-        [Type.ELEVEN_LABS]: elevenLabsSpeak,
-        [Type.ME_SPEAK]: meSpeak,
-        // todo support more
-        // [Type.IBM]: ibmSpeak,
-        // [Type.BAIDU]: baiduSpeak,
-        [Type.GOOGLE]: googleSpeak,
-      };
-      const voice =
-        voicesRef.current.find((v) => v.lang === options.lang) ||
-        voicesRef.current[0];
+  const speak = useCallback(
+    async (
+      text: string,
+      options: TTSOptions = {
+        lang: 'en-US',
+      },
+    ) => {
+      try {
+        setIsSpeeching(true);
+        console.log('--speak--', text, options, config);
+        const speckAction = {
+          [Type.WEB_API]: webapiSpeak,
+          [Type.TTS]: TTSSpeak,
+          [Type.ELEVEN_LABS]: elevenLabsSpeak,
+          [Type.ME_SPEAK]: meSpeak,
+          // todo support more
+          // [Type.IBM]: ibmSpeak,
+          // [Type.BAIDU]: baiduSpeak,
+          [Type.GOOGLE]: googleSpeak,
+        };
+        const voice =
+          voicesRef.current.find((v) => v.lang === options.lang) ||
+          voicesRef.current[0];
 
-      await speckAction[config.type](text, { ...options, voice }).catch(() =>
-        meSpeak(text, options),
-      );
-    } catch (e) {
-      console.error('speak error:', e);
-    } finally {
-      setIsSpeeching(false);
-    }
-  };
+        await speckAction[config.type](text, { ...options, voice }).catch(() =>
+          meSpeak(text, options),
+        );
+      } catch (e) {
+        console.error('speak error:', e);
+      } finally {
+        setIsSpeeching(false);
+      }
+    },
+    [config],
+  );
 
   return { speak, isSpeeching, isSupportWebApi, langs };
 }

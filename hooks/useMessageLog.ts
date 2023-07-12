@@ -28,6 +28,8 @@ export function useMessageLog() {
       messageLogRef.current = [...messageLogRef.current, newMessage];
       setMessageLog(messageLogRef.current);
 
+      console.table(newMessage);
+
       return messageLogRef.current;
     },
     [],

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 type useChatCompletionConfig = {
   url: string;
@@ -32,51 +32,54 @@ export function useChatCompletion(
     created: number;
   }>();
 
-  const getCompletion = async (
-    prompt: string,
-    config: ChatCompletionConfig,
-  ): Promise<{
-    content: string;
-    created: number;
-  } | void> => {
-    const url = initConfig.url;
-    const apikey = initConfig.apikey;
-    const model = initConfig.model;
-    const reqJson = {
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
+  const getCompletion = useCallback(
+    async (
+      prompt: string,
+      config: ChatCompletionConfig,
+    ): Promise<{
+      content: string;
+      created: number;
+    } | void> => {
+      const url = initConfig.url;
+      const apikey = initConfig.apikey;
+      const model = initConfig.model;
+      const reqJson = {
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        max_tokens: 2048,
+        temperature: 0.5,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        stop: ['\n', ' Human:', ' AI:'],
+        model: model,
+        ...config,
+      };
+      const response = await fetch(`${url}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apikey}`,
         },
-      ],
-      max_tokens: 2048,
-      temperature: 0.5,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      stop: ['\n', ' Human:', ' AI:'],
-      model: model,
-      ...config,
-    };
-    const response = await fetch(`${url}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apikey}`,
-      },
-      body: JSON.stringify(reqJson),
-    });
-    const data = (await response.json()) || {};
-    console.log('--getCompletion-- ', reqJson, data);
-    if (data.error) {
-      setError(data.error);
-      return;
-    }
-    const content = data?.choices[0]?.message?.content || '';
-    const resData = { created: data.created, content };
-    setCompletion(resData);
-    return resData;
-  };
+        body: JSON.stringify(reqJson),
+      });
+      const data = (await response.json()) || {};
+      console.log('--getCompletion-- ', reqJson, data);
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+      const content = data?.choices[0]?.message?.content || '';
+      const resData = { created: data.created, content };
+      setCompletion(resData);
+      return resData;
+    },
+    [initConfig],
+  );
 
   return {
     error,

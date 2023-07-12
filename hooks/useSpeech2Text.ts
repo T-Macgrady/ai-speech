@@ -24,8 +24,8 @@ const useSpeech2Text = ({
   const [isTranscribing, setIsTranscribing] = useState(false);
 
   const init = useCallback(() => {
-    if (voiceRecognition.current) return;
     setIsTranscribing(true);
+
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     voiceRecognition.current = new SpeechRecognition();
@@ -38,11 +38,12 @@ const useSpeech2Text = ({
       const results = event.results[event.resultIndex];
       const value = results[0].transcript.trim();
 
-      console.log('--voiceRecognition.current-value--', value, results);
+      console.log('--voiceRecognition-onresult--', value, results);
       setText(value);
       onRecognize?.({ value, isFinal: results.isFinal });
     };
     voiceRecognition.current.onend = () => {
+      console.log('--voiceRecognition.current.onend--');
       setIsTranscribing(false);
       if (onEnd) {
         onEnd();
@@ -62,10 +63,6 @@ const useSpeech2Text = ({
     voiceRecognition.current.onnomatch = (e: any) => {
       console.log('onnomatch:', e);
     };
-
-    // voiceRecognition.current.onresult = (e: any) => {
-    //   console.log('onresult:', e);
-    // };
 
     voiceRecognition.current.onsoundend = (e: any) => {
       console.log('onsoundend:', e);
@@ -90,21 +87,23 @@ const useSpeech2Text = ({
     console.log('--voiceRecognition.start--', voiceRecognition.current);
     voiceRecognition.current.start();
   }, [onEnd, onRecognize]);
+
   const start = useCallback(() => {
     if (voiceRecognition.current) {
       voiceRecognition.current.start();
     } else {
       init();
-      // voiceRecognition.current.start();
     }
   }, [init]);
   const abort = () => {
     if (voiceRecognition.current) {
+      console.error('--voiceRecognition.abort--');
       voiceRecognition.current.abort();
     }
   };
   const stop = () => {
     if (voiceRecognition.current) {
+      console.error('--voiceRecognition.stop--');
       voiceRecognition.current.stop();
     }
   };
