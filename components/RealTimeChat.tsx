@@ -1,10 +1,10 @@
 'use client';
-import { useWhisper } from '@tmacc/use-speech-to-text';
-import { useEffect, useState } from 'react';
 import { useChatCompletion } from '@/hooks/useChatCompletion';
 import { useMessageLog } from '@/hooks/useMessageLog';
-import useText2Speech from '@/hooks/useText2Speech';
 import useSpeech2Text from '@/hooks/useSpeech2Text';
+import useText2Speech from '@/hooks/useText2Speech';
+import { useWhisper } from '@tmacc/use-speech-to-text';
+import { useEffect, useState } from 'react';
 // import { useSpeaking } from '@/hooks/useSpeaking';
 import ClientOnly from './ClientOnly';
 
@@ -172,8 +172,8 @@ export default function RealTimeChat() {
 
   return (
     <ClientOnly>
-      <div className='p-4'>
-        <h2 className='text-2xl font-bold mb-4'>转录</h2>
+      <div className="p-4">
+        <h2 className="text-2xl font-bold mb-4">转录</h2>
         <p>Recording: {String(recording)}</p>
         <p>Speaking: {String(speaking)}</p>
         <p>Transcribing: {String(transcribing)}</p>
@@ -183,42 +183,42 @@ export default function RealTimeChat() {
         <p>isSpeeching: {String(isSpeeching)}</p>
         <p>isTranscribing: {String(isTranscribing)}</p>
         <p>recognizeText Text: {recognizeText}</p>
-        <div className='flex space-x-4'>
+        <div className="flex space-x-4">
           <button
-            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
+            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
             onClick={() => startRecording()}
           >
             start
           </button>
           <button
-            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
+            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
             onClick={() => pauseRecording()}
           >
             Pause
           </button>
           <button
-            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
+            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
             onClick={() => stopRecording()}
           >
             Stop
           </button>
         </div>
         <h1>speech2text</h1>
-        <div className='flex space-x-4'>
+        <div className="flex space-x-4">
           <button
-            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
+            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
             onClick={() => startSpeech2text()}
           >
             start
           </button>
           <button
-            className='mb-5 bg-blue-500 text-white py-2 px-4 rounded'
+            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
             onClick={() => stopSpeech2text()}
           >
             stop
           </button>
           <button
-            className='bg-blue-500 text-white py-2 px-4 rounded'
+            className="bg-blue-500 text-white py-2 px-4 rounded"
             // onClick={() => speak('你好，你叫什么名字，你住在哪里，你是谁，吃饭了吗')}
             onClick={() => {
               const utterance = new SpeechSynthesisUtterance('hello yoyo');
@@ -229,14 +229,14 @@ export default function RealTimeChat() {
             Speak
           </button>
         </div>
-        <h2 className='text-2xl font-bold my-4'>响应</h2>
+        <h2 className="text-2xl font-bold my-4">响应</h2>
         <p>complete: {completion}</p>
         <p>lastAssistantMessage: {lastAssistantMessage}</p>
-        <h2 className='text-2xl font-bold my-4'>对话历史</h2>
+        <h2 className="text-2xl font-bold my-4">对话历史</h2>
         <ul>
           {messageLog.map((message) => (
-            <li key={message.created} className='mb-2'>
-              <span className='font-bold'>{message.role}: </span>
+            <li key={message.created} className="mb-2">
+              <span className="font-bold">{message.role}: </span>
               <span>{message.content}</span>
             </li>
           ))}
