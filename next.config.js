@@ -13,6 +13,17 @@ const nextConfig = {
       'libs',
     ],
   },
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.worker\.js$/,
+      loader: 'worker-loader',
+      options: {
+        publicPath: '/_next/',
+      },
+    });
+
+    return config;
+  },
 };
 
 module.exports = nextConfig;

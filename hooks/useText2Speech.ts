@@ -5,12 +5,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 // import ibmText2Speech from 'watson-speech/text-to-speech/index';
 import { WebApiTTS } from '@/libs/TTS/webApi';
+import { TTSRecorder } from '@/libs/TTS/xf/xf';
 import * as mespeak from 'mespeak';
 
 let ifMeSpeakInit = false;
 
 enum Type {
   WEB_API = 'webapi',
+  XF_YUN = 'xfyun',
   ELEVEN_LABS = 'elevenLabs',
   TTS = 'tts',
   ME_SPEAK = 'meSpeak',
@@ -29,7 +31,7 @@ export default function useText2Speech(
   config: {
     type: Type;
   } = {
-    type: Type.WEB_API,
+    type: Type.XF_YUN,
   },
 ) {
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
@@ -58,6 +60,7 @@ export default function useText2Speech(
         console.log('--speak--', text, options, config);
         const speckAction = {
           [Type.WEB_API]: webapiSpeak,
+          [Type.XF_YUN]: xfSpeak,
           [Type.TTS]: TTSSpeak,
           [Type.ELEVEN_LABS]: elevenLabsSpeak,
           [Type.ME_SPEAK]: meSpeak,
@@ -98,6 +101,13 @@ async function webapiSpeak(
     text,
   });
   await tts.play();
+}
+async function xfSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
+  const tts = new TTSRecorder({
+    text,
+    voiceName: options.lang === 'en-US' ? 'x2_engam_laura' : 'xiaoyan',
+  });
+  await tts.start();
 }
 
 async function meSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
