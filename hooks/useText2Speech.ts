@@ -76,8 +76,8 @@ export default function useText2Speech(
           await elevenLabsSpeak(text).catch(() => webapiSpeak(text, options));
         },
         // todo support more
-        [Type.IBM]: ibmSpeak,
-        [Type.BAIDU]: baiduSpeak,
+        // [Type.IBM]: ibmSpeak,
+        // [Type.BAIDU]: baiduSpeak,
         [Type.GOOGLE]: googleSpeak,
       };
       // setText(text);
@@ -152,16 +152,16 @@ async function TTSSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
 }
 
 // 调用ibm的语音合成接口
-async function ibmSpeak() {
-  // ibmText2Speech.synthesize({
-  //   text,
-  //   autoPlay: true,
-  //   voice: 'en-US_AllisonVoice',
-  // });
-}
+// async function ibmSpeak() {
+// ibmText2Speech.synthesize({
+//   text,
+//   autoPlay: true,
+//   voice: 'en-US_AllisonVoice',
+// });
+// }
 
 // 调用百度的语音合成接口
-async function baiduSpeak() {}
+// async function baiduSpeak() {}
 
 // 调用google的语音合成接口
 async function googleSpeak(text: string, options: TTSOptions) {

@@ -19,7 +19,7 @@ export function useMessageLog() {
   );
 
   const addMessage = useCallback(
-    (role: Message['role'], content: string = '', created = +new Date()) => {
+    (role: Message['role'], content = '', created = +new Date()) => {
       const newMessage: Message = {
         role,
         content,
@@ -41,14 +41,14 @@ export function useMessageLog() {
   );
 
   const userSay = useCallback(
-    (content: string = '', created: number = +new Date()) => {
+    (content = '', created: number = +new Date()) => {
       return addMessage('user', content, created);
     },
     [addMessage],
   );
 
   const assistantSay = useCallback(
-    (content: string = '', created: number = +new Date()) => {
+    (content = '', created: number = +new Date()) => {
       return addMessage('assistant', content, created);
     },
     [addMessage],
