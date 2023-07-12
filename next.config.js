@@ -2,7 +2,16 @@
 const nextConfig = {
   output: 'export',
   eslint: {
-    dirs: ['app', 'components', 'hooks', 'utils', 'pages'],
+    dirs: [
+      'app',
+      'components',
+      'hooks',
+      'utils',
+      'pages',
+      'constants',
+      'types',
+      'libs',
+    ],
   },
 };
 

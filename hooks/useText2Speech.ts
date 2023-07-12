@@ -4,6 +4,7 @@ import { Tts } from '@/utils/Tts';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // import ibmText2Speech from 'watson-speech/text-to-speech/index';
+import { WebApiTTS } from '@/libs/TTS/webApi';
 import * as mespeak from 'mespeak';
 
 let ifMeSpeakInit = false;
@@ -92,24 +93,11 @@ async function webapiSpeak(
   text: string,
   options: TTSOptions = { lang: 'en-US' },
 ) {
-  return new Promise<void>((resolve, reject) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = options.lang;
-    const voices = window.speechSynthesis.getVoices();
-    utterance.voice =
-      voices.find((voice) => {
-        return voice.lang === options.lang;
-      }) || voices[0];
-    console.log(utterance.voice, voices);
-    utterance.onerror = (e) => {
-      reject('webapi speak error:' + e);
-    };
-    utterance.onstart = () => {};
-    utterance.onend = () => {
-      resolve();
-    };
-    window.speechSynthesis.speak(utterance);
+  const tts = new WebApiTTS({
+    lang: options.lang,
+    text,
   });
+  await tts.play();
 }
 
 async function meSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
