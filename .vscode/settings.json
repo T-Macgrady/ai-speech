@@ -4,8 +4,8 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": true,
     "source.organizeImports": true
-  },
-  "files.exclude": {
-    "**/public": true
   }
+  // "files.exclude": {
+  //   "**/public": true
+  // }
 }
