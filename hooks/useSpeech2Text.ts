@@ -1,6 +1,5 @@
-// useSpeech2Text hook 使用 SpeechRecognition API
-
 import { useCallback, useEffect, useRef, useState } from 'react';
+// import  from "@types/webspeechapi";
 
 export interface VoiceRecognitionResults {
   value: string;
@@ -11,15 +10,19 @@ const useSpeech2Text = ({
   // lang = '',
   autoStart = false,
   onRecognize,
+  onRecognizeEnd,
   onEnd,
 }: {
   // lang?: string;
   autoStart?: boolean;
-  onRecognize?: (value: { value: string; isFinal: boolean }) => void;
-  onEnd?: () => void;
+  onRecognize?: (value: string, event) => void;
+  onRecognizeEnd?: (value: string) => void;
+  onEnd?: (value: string | undefined, error?: SpeechRecognitionError) => void;
   enabledMultiSentences?: boolean;
 }) => {
-  const voiceRecognition = useRef<any>(null);
+  const error = useRef<SpeechRecognitionError>();
+  const voiceRecognition = useRef<SpeechRecognition>();
+
   const [text, setText] = useState('');
   const [isTranscribing, setIsTranscribing] = useState(false);
 
@@ -30,82 +33,81 @@ const useSpeech2Text = ({
       window.SpeechRecognition || window.webkitSpeechRecognition;
     voiceRecognition.current = new SpeechRecognition();
 
-    // voiceRecognition.current.lang = lang;
-    voiceRecognition.current.continuous = true;
-    voiceRecognition.current.interimResults = true;
+    // voiceRecognition.current!.lang = lang;
+    voiceRecognition.current!.continuous = true;
+    voiceRecognition.current!.interimResults = true;
 
-    voiceRecognition.current.onresult = (event: any) => {
+    voiceRecognition.current!.onstart = (e) => {
+      error.current = undefined;
+      setIsTranscribing(true);
+      console.log('voiceRecognition-onstart:', e);
+    };
+    voiceRecognition.current!.onerror = (e) => {
+      console.error('voiceRecognition-onerror:', e);
+      error.current = e;
+    };
+    voiceRecognition.current!.onresult = (event) => {
       const results = event.results[event.resultIndex];
       const value = results[0].transcript.trim();
 
-      console.log('--voiceRecognition-onresult--', value, results);
       setText(value);
-      onRecognize?.({ value, isFinal: results.isFinal });
+      onRecognize?.(value, event);
+      console.log('--voiceRecognition-onresult--', value, results);
+      if (results.isFinal && value) {
+        console.log('--voiceRecognition-onRecognize-end--', value);
+        onRecognizeEnd?.(value);
+      }
     };
-    voiceRecognition.current.onend = () => {
-      console.log('--voiceRecognition.current.onend--');
+    voiceRecognition.current!.onend = () => {
+      console.log('--voiceRecognition.current.onend--', text, error);
       setIsTranscribing(false);
       if (onEnd) {
-        onEnd();
+        onEnd(text, error.current);
       } else {
-        voiceRecognition.current.start();
+        voiceRecognition.current!.start();
       }
     };
 
-    voiceRecognition.current.onaudioend = (e: any) => {
-      console.log('onaudioend:', e);
+    voiceRecognition.current!.onaudioend = (e) => {
+      console.log('voiceRecognition-onaudioend:', e);
     };
 
-    voiceRecognition.current.onaudiostart = (e: any) => {
-      console.log('onaudiostart:', e);
+    voiceRecognition.current!.onaudiostart = (e) => {
+      console.log('voiceRecognition-onaudiostart:', e);
     };
 
-    voiceRecognition.current.onnomatch = (e: any) => {
-      console.log('onnomatch:', e);
+    voiceRecognition.current!.onnomatch = (e) => {
+      console.log('voiceRecognition-onnomatch:', e);
     };
 
-    voiceRecognition.current.onsoundend = (e: any) => {
-      console.log('onsoundend:', e);
+    voiceRecognition.current!.onsoundend = (e) => {
+      console.log('voiceRecognition-onsoundend:', e);
     };
 
-    voiceRecognition.current.onsoundstart = (e: any) => {
-      console.log('onsoundstart:', e);
+    voiceRecognition.current!.onsoundstart = (e) => {
+      console.log('voiceRecognition-onsoundstart:', e);
     };
 
-    voiceRecognition.current.onspeechend = (e: any) => {
-      console.log('onspeechend:', e);
+    voiceRecognition.current!.onspeechend = (e) => {
+      console.log('voiceRecognition-onspeechend:', e);
     };
 
-    voiceRecognition.current.onspeechstart = (e: any) => {
-      console.log('onspeechstart:', e);
+    voiceRecognition.current!.onspeechstart = (e) => {
+      console.log('voiceRecognition-onspeechstart:', e);
     };
 
-    voiceRecognition.current.onstart = (e: any) => {
-      setIsTranscribing(true);
-      console.log('onstart:', e);
-    };
-    console.log('--voiceRecognition.start--', voiceRecognition.current);
-    voiceRecognition.current.start();
-  }, [onEnd, onRecognize]);
+    voiceRecognition.current!.start();
+  }, [onEnd, onRecognize, onRecognizeEnd, text]);
 
   const start = useCallback(() => {
-    if (voiceRecognition.current) {
-      voiceRecognition.current.start();
-    } else {
-      init();
-    }
+    voiceRecognition.current ? voiceRecognition.current?.start() : init();
   }, [init]);
   const abort = () => {
-    if (voiceRecognition.current) {
-      console.error('--voiceRecognition.abort--');
-      voiceRecognition.current.abort();
-    }
+    voiceRecognition.current?.abort();
   };
   const stop = () => {
-    if (voiceRecognition.current) {
-      console.error('--voiceRecognition.stop--');
-      voiceRecognition.current.stop();
-    }
+    console.log('--voiceRecognition.stop--');
+    voiceRecognition.current?.stop();
   };
 
   useEffect(() => {
@@ -115,6 +117,7 @@ const useSpeech2Text = ({
   return {
     isTranscribing,
     text,
+    errorRef: error,
     start,
     stop,
     abort,

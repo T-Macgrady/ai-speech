@@ -57,7 +57,7 @@ export default function useText2Speech(
     ) => {
       try {
         setIsSpeeching(true);
-        console.log('--speak--', text, options, config);
+        console.log('--speak-start--', text, options, config);
         const speckAction = {
           [Type.WEB_API]: webapiSpeak,
           [Type.XF_YUN]: xfSpeak,
@@ -69,16 +69,19 @@ export default function useText2Speech(
           // [Type.BAIDU]: baiduSpeak,
           [Type.GOOGLE]: googleSpeak,
         };
-        const voice =
-          voicesRef.current.find((v) => v.lang === options.lang) ||
-          voicesRef.current[0];
-
-        await speckAction[config.type](text, { ...options, voice }).catch(() =>
-          meSpeak(text, options),
-        );
+        try {
+          await speckAction[config.type](text, options);
+        } catch {
+          try {
+            await webapiSpeak(text, options);
+          } catch {
+            await meSpeak(text, options);
+          }
+        }
       } catch (e) {
-        console.error('speak error:', e);
+        console.error('--speak error---:', e);
       } finally {
+        console.log('--speak-end----');
         setIsSpeeching(false);
       }
     },
@@ -94,20 +97,31 @@ const checkIfSupportWebApi = () => {
 };
 async function webapiSpeak(
   text: string,
-  options: TTSOptions = { lang: 'en-US' },
+  { lang }: TTSOptions = { lang: 'en-US' },
 ) {
-  const tts = new WebApiTTS({
-    lang: options.lang,
-    text,
+  return new Promise<void>(async (resolve, reject) => {
+    const tts = new WebApiTTS({ text, lang });
+    tts.endPromise.then(resolve);
+    tts.errorPromise.then(reject);
+    tts.play();
   });
-  await tts.play();
 }
 async function xfSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
-  const tts = new TTSRecorder({
-    text,
-    voiceName: options.lang === 'en-US' ? 'x2_engam_laura' : 'xiaoyan',
+  return new Promise<void>(async (resolve, reject) => {
+    const tts = new TTSRecorder({
+      text,
+      voiceName: options.lang === 'en-US' ? 'x2_engam_laura' : 'xiaoyan',
+      onEnd() {
+        console.log('xfyun onEnd');
+        resolve();
+      },
+      onError() {
+        console.log('xfyun onError');
+        reject();
+      },
+    });
+    tts.start();
   });
-  await tts.start();
 }
 
 async function meSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
@@ -119,7 +133,7 @@ async function meSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
       mespeak.loadVoice(meSpeakVoice);
       ifMeSpeakInit = true;
     }
-    console.error('webapi speak', text, options);
+    console.log('me speak', text, options);
     mespeak.speak(text, { pitch: 45, speed: 140, Amplitude: 90 });
     resolve();
     // window.responsiveVoice.speak("Hello, this is a test.")

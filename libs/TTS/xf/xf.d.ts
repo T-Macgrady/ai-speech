@@ -8,6 +8,8 @@ export class TTSRecorder {
     text?: string;
     tte?: string;
     defaultText?: string;
+    onEnd?: () => void;
+    onError?: () => void;
   });
 
   setParams(params: {
@@ -37,3 +39,9 @@ export class TTSRecorder {
 
   stop(): void;
 }
+
+export const getWebsocketUrl: (
+  url: string,
+  reqLine: string,
+  method?: string,
+) => string;

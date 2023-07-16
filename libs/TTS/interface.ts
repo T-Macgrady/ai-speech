@@ -31,9 +31,15 @@ export interface TTSBase {
 
   cancel: () => void;
 
-  startPromise?: () => Promise<void>;
+  _startPromise?: () => Promise<void>;
 
-  endPromise?: () => Promise<void>;
+  _endPromise: () => Promise<void>;
 
-  errorPromise: () => Promise<unknown>;
+  _errorPromise: () => Promise<unknown>;
+
+  startPromise?: Promise<void>;
+
+  endPromise: Promise<void>;
+
+  errorPromise: Promise<unknown>;
 }

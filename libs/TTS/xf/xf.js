@@ -30,16 +30,16 @@ const APPID = '3bb14f18';
 const API_SECRET = 'N2VmZmE5ZjhiYjA0YmU1YWM0OTVkYjFk';
 const API_KEY = 'f83314b9cc4d8e5ea7f671ae85ac2056';
 
-function getWebsocketUrl() {
-  return new Promise((resolve, reject) => {
+export function getWebsocketUrl(url = '', reqLine = '', method = 'POST') {
+  return new Promise((resolve) => {
     const apiKey = API_KEY;
     const apiSecret = API_SECRET;
-    let url = 'wss://tts-api.xfyun.cn/v2/tts';
     const host = location.host;
     const date = new Date().toGMTString();
     const algorithm = 'hmac-sha256';
     const headers = 'host date request-line';
-    const signatureOrigin = `host: ${host}\ndate: ${date}\nGET /v2/tts HTTP/1.1`;
+    const signatureOrigin = `host: ${host}\ndate: ${date}\n${method} ${reqLine} HTTP/1.1`;
+    console.log('signatureOrigin--', signatureOrigin);
     const signatureSha = CryptoJS.HmacSHA256(signatureOrigin, apiSecret);
     const signature = CryptoJS.enc.Base64.stringify(signatureSha);
     const authorizationOrigin = `api_key="${apiKey}", algorithm="${algorithm}", headers="${headers}", signature="${signature}"`;
@@ -58,6 +58,9 @@ export class TTSRecorder {
     text = '',
     tte = 'UTF8',
     defaultText = '请输入您要合成的文本',
+
+    onEnd,
+    onError,
   } = {}) {
     this.speed = speed;
     this.voice = voice;
@@ -71,6 +74,8 @@ export class TTSRecorder {
     this.rawAudioData = [];
     this.audioDataOffset = 0;
     this.status = 'init';
+    if (onEnd) this.onEnd = onEnd;
+    if (onError) this.onError = onError;
     transWorker.onmessage = (e) => {
       this.audioData.push(...e.data.data);
       this.rawAudioData.push(...e.data.rawAudioData);
@@ -93,7 +98,11 @@ export class TTSRecorder {
   // 连接websocket
   connectWebSocket() {
     this.setStatus('ttsing');
-    return getWebsocketUrl().then((url) => {
+    return getWebsocketUrl(
+      'wss://tts-api.xfyun.cn/v2/tts',
+      '/v2/tts',
+      'GET',
+    ).then((url) => {
       let ttsWS;
       if ('WebSocket' in window) {
         ttsWS = new WebSocket(url);
@@ -116,7 +125,8 @@ export class TTSRecorder {
       ttsWS.onerror = (e) => {
         clearTimeout(this.playTimeout);
         this.setStatus('errorTTS');
-        alert('WebSocket报错，请f12查看详情');
+        // alert('WebSocket报错，请f12查看详情');
+        this?.onError(e);
         console.error(`详情查看：${encodeURI(url.replace('wss:', 'https:'))}`);
       };
       ttsWS.onclose = (e) => {
@@ -240,7 +250,7 @@ export class TTSRecorder {
     bufferSource.buffer = audioBuffer;
     bufferSource.connect(this.audioContext.destination);
     bufferSource.start();
-    bufferSource.onended = (event) => {
+    bufferSource.onended = () => {
       if (this.status !== 'play') {
         return;
       }
@@ -253,6 +263,7 @@ export class TTSRecorder {
   }
   // 音频播放结束
   audioStop() {
+    this?.onEnd();
     this.setStatus('endPlay');
     clearTimeout(this.playTimeout);
     this.audioDataOffset = 0;

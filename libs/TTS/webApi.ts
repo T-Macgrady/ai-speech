@@ -9,11 +9,19 @@ export class WebApiTTS implements TTSBase {
   // volume?: number = 1; // 0 to 1
   // voice?: unknown;
 
-  private utterance: SpeechSynthesisUtterance | null = null;
+  private utterance: SpeechSynthesisUtterance = {} as SpeechSynthesisUtterance;
 
   static readonly voices = window.speechSynthesis?.getVoices();
 
   static readonly ifSupported = 'SpeechSynthesisUtterance' in window;
+
+  startPromise: Promise<void> = new Promise(() => '');
+
+  endPromise: Promise<void> = new Promise(() => '');
+
+  errorPromise: Promise<unknown> = new Promise(() => '');
+
+  pausePromise: Promise<void> = new Promise(() => '');
 
   constructor(public config: TTSBase['config']) {
     this?.init();
@@ -42,18 +50,23 @@ export class WebApiTTS implements TTSBase {
     }
 
     this.utterance = new SpeechSynthesisUtterance(this.config.text);
+    if (!this.utterance) return;
     Object.keys(this.config).forEach((key) => {
       if (this.config[key]) {
-        this.utterance![key] = this.config[key];
+        this.utterance[key] = this.config[key];
       }
     });
     this.utterance.voice = this.voice;
     console.log('vwebapi-utterance', this.utterance);
+    this.startPromise = this._startPromise();
+    this.pausePromise = this._pausePromise();
+    this.endPromise = this._endPromise();
+    this.errorPromise = this._errorPromise();
   }
 
   async play() {
-    window.speechSynthesis.speak(this.utterance!);
-    await this.endPromise();
+    window.speechSynthesis.speak(this.utterance);
+    await this.endPromise;
   }
 
   pause() {
@@ -68,36 +81,36 @@ export class WebApiTTS implements TTSBase {
     window.speechSynthesis.cancel();
   }
 
-  startPromise() {
+  _startPromise() {
     return new Promise<void>((resolve) => {
-      this.utterance!.onstart = () => {
+      this.utterance.onstart = () => {
         console.warn('startPromise');
         resolve();
       };
     });
   }
 
-  endPromise() {
+  _endPromise() {
     return new Promise<void>((resolve) => {
-      this.utterance!.onend = () => {
+      this.utterance.onend = () => {
         console.warn('endPromise');
         resolve();
       };
     });
   }
 
-  errorPromise() {
+  _errorPromise() {
     return new Promise<unknown>((resolve) => {
-      this.utterance!.onerror = (e: unknown) => {
-        console.error('errorPromise');
+      this.utterance.onerror = (e: unknown) => {
+        console.error('errorPromise', e);
         resolve(e);
       };
     });
   }
 
-  pausePromise() {
+  _pausePromise() {
     return new Promise<void>((resolve) => {
-      this.utterance!.onpause = () => {
+      this.utterance.onpause = () => {
         resolve();
       };
     });
