@@ -1,10 +1,6 @@
-import { useCallback, useState } from 'react';
+'use client';
+import { useCallback, useEffect, useState } from 'react';
 
-type useChatCompletionConfig = {
-  url: string;
-  apikey: string;
-  model: string;
-};
 type ChatCompletionConfig = {
   model?: string;
   messages?: {
@@ -19,13 +15,13 @@ type ChatCompletionConfig = {
   presence_penalty?: number;
   stop?: string[];
 };
-export function useChatCompletion(
-  initConfig: useChatCompletionConfig = {
-    url: 'https://api.chatanywhere.com.cn/v1',
-    model: 'gpt-3.5-turbo-16k',
-    apikey: 'sk-JaV54rjCdAskBUzHkI7ujNf8qWjANFEc0XmOJTZt3qPWWLAO',
-  },
-) {
+
+export function useChatCompletion({
+  prompt = '',
+  url = 'https://api.chatanywhere.com.cn/v1',
+  model = 'gpt-3.5-turbo-16k',
+  apikey = 'sk-JaV54rjCdAskBUzHkI7ujNf8qWjANFEc0XmOJTZt3qPWWLAO',
+} = {}) {
   const [error, setError] = useState(null);
   const [completion, setCompletion] = useState<{
     content: string;
@@ -34,20 +30,17 @@ export function useChatCompletion(
 
   const getCompletion = useCallback(
     async (
-      prompt: string,
-      config: ChatCompletionConfig,
+      text: string,
+      config?: ChatCompletionConfig,
     ): Promise<{
       content: string;
       created: number;
     } | void> => {
-      const url = initConfig.url;
-      const apikey = initConfig.apikey;
-      const model = initConfig.model;
       const reqJson = {
         messages: [
           {
             role: 'user',
-            content: prompt,
+            content: text || prompt || '',
           },
         ],
         max_tokens: 2048,
@@ -78,8 +71,14 @@ export function useChatCompletion(
       setCompletion(resData);
       return resData;
     },
-    [initConfig],
+    [prompt, url, apikey, model],
   );
+
+  useEffect(() => {
+    if (prompt) {
+      getCompletion(prompt);
+    }
+  }, [prompt, getCompletion]);
 
   return {
     error,

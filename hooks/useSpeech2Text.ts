@@ -1,3 +1,4 @@
+'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 // import  from "@types/webspeechapi";
 
@@ -7,14 +8,15 @@ export interface VoiceRecognitionResults {
 }
 
 const useSpeech2Text = ({
-  // lang = '',
+  lang = '',
   autoStart = false,
   onRecognize,
   onRecognizeEnd,
   onEnd,
 }: {
-  // lang?: string;
+  lang?: string;
   autoStart?: boolean;
+  timeout?: number;
   onRecognize?: (value: string, event) => void;
   onRecognizeEnd?: (value: string) => void;
   onEnd?: (value: string | undefined, error?: SpeechRecognitionError) => void;
@@ -22,6 +24,7 @@ const useSpeech2Text = ({
 }) => {
   const error = useRef<SpeechRecognitionError>();
   const voiceRecognition = useRef<SpeechRecognition>();
+  const timer = useRef<number>();
 
   const [text, setText] = useState('');
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -33,7 +36,7 @@ const useSpeech2Text = ({
       window.SpeechRecognition || window.webkitSpeechRecognition;
     voiceRecognition.current = new SpeechRecognition();
 
-    // voiceRecognition.current!.lang = lang;
+    lang && (voiceRecognition.current!.lang = lang);
     voiceRecognition.current!.continuous = true;
     voiceRecognition.current!.interimResults = true;
 
@@ -59,7 +62,7 @@ const useSpeech2Text = ({
       }
     };
     voiceRecognition.current!.onend = () => {
-      console.log('--voiceRecognition.current.onend--', text, error);
+      console.log('--voiceRecognition.current.onend--', text, error.current);
       setIsTranscribing(false);
       if (onEnd) {
         onEnd(text, error.current);

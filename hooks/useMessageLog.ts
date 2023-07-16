@@ -1,3 +1,4 @@
+'use client';
 import { useCallback, useRef, useState } from 'react';
 
 type Message = {
@@ -56,6 +57,11 @@ export function useMessageLog() {
     [addMessage],
   );
 
+  const reset = useCallback(() => {
+    messageLogRef.current = [];
+    setMessageLog(messageLogRef.current);
+  }, []);
+
   return {
     lastUserMessage: getLastMessageByRole(messageLog, 'user')?.content,
     lastAssistantMessage: getLastMessageByRole(messageLog, 'assistant')
@@ -64,5 +70,6 @@ export function useMessageLog() {
     systemSay,
     userSay,
     assistantSay,
+    reset,
   };
 }
