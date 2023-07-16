@@ -15,7 +15,7 @@ export default function RealTimeChat() {
     useMessageLog();
 
   const [currentLang, setCurrentLang] = useState('en-US');
-  const { getCompletion } = useChatCompletion();
+  const { getCompletionStream: getCompletion } = useChatCompletion();
   const { speak, isSpeeching } = useText2Speech();
 
   const vms = useRef<VMS>();

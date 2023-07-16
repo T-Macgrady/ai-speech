@@ -100,7 +100,7 @@ const useSpeech2Text = ({
     };
 
     voiceRecognition.current!.start();
-  }, [onEnd, onRecognize, onRecognizeEnd, text]);
+  }, [lang, onEnd, onRecognize, onRecognizeEnd, text]);
 
   const start = useCallback(() => {
     voiceRecognition.current ? voiceRecognition.current?.start() : init();
