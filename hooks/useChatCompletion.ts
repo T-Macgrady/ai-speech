@@ -27,12 +27,12 @@ const defaultConfig: ChatCompletionConfig = {
   prompt: '',
   model: 'gpt-3.5-turbo-16k',
   messages: [],
-  max_tokens: 2048,
+  max_tokens: 10000,
   temperature: 0.5,
   top_p: 1,
   frequency_penalty: 0,
   presence_penalty: 0,
-  stop: ['\n', ' Human:', ' AI:'],
+  // stop: ['\n', ' Human:', ' AI:'],
   stream: false,
 };
 const defaultUseConfig: UseChatCompletionConfig = {

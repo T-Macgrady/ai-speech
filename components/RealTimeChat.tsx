@@ -11,11 +11,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import VideoPlayer from './Video';
 
 export default function RealTimeChat() {
-  const { messageLog, lastAssistantMessage, systemSay, userSay, assistantSay } =
-    useMessageLog();
+  const { messageLog, systemSay, userSay, assistantSay } = useMessageLog();
 
   const [currentLang, setCurrentLang] = useState('en-US');
-  const { getCompletionStream: getCompletion } = useChatCompletion();
+  const { completion, getCompletionStream } = useChatCompletion();
   const { speak, isSpeeching } = useText2Speech();
 
   const vms = useRef<VMS>();
@@ -25,7 +24,7 @@ export default function RealTimeChat() {
       const messages = userSay(text);
 
       // getCompletion
-      const completionObj = await getCompletion(text, { messages });
+      const completionObj = await getCompletionStream(text, { messages });
       if (!completionObj) return;
       const { content, created } = completionObj;
       const { lang, text: realCompletion } = extractLangAndClean(content);
@@ -40,7 +39,7 @@ export default function RealTimeChat() {
         lang: computedLang || currentLang,
       });
     },
-    [assistantSay, currentLang, getCompletion, speak, userSay],
+    [assistantSay, currentLang, getCompletionStream, speak, userSay],
   );
 
   useEffect(() => {
@@ -285,12 +284,13 @@ export default function RealTimeChat() {
           </button>
         </div>
 
-        <h2 className="font-bold mb-4">语音识别&chatgpt补全&合成</h2>
-
-        {/* <p>isSpeaking: {String(isSpeaking)}</p> */}
+        <h2 className="font-bold mb-1">语音识别</h2>
         <p>isTranscribing: {String(isTranscribing)}</p>
+        {/* <p>isSpeaking: {String(isSpeaking)}</p> */}
         <p>recognizeText: {recognizeText}</p>
-        <p>completion: {lastAssistantMessage}</p>
+        <h2 className="font-bold mb-1">chatgpt补全</h2>
+        <p>completionStream: {completion?.content}</p>
+        <h2 className="font-bold mb-1">语音合成</h2>
         <p>isSpeeching: {String(isSpeeching)}</p>
 
         <div className="mt-5 flex space-x-4">
@@ -308,9 +308,8 @@ export default function RealTimeChat() {
           </button>
           <button
             className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
-            // onClick={() => speak('你好，你叫什么名字，你住在哪里，你是谁，吃饭了吗')}
             onClick={() => {
-              getCompletionAndSpeak('Hello');
+              getCompletionAndSpeak('hello');
             }}
           >
             Hello
@@ -322,7 +321,7 @@ export default function RealTimeChat() {
 
         <h2 className="text-2xl font-bold my-4">历史</h2>
         <ul>
-          {messageLog.slice(1).map((message) => (
+          {[...messageLog.slice(1)].reverse().map((message) => (
             <li key={message.created} className="mb-2">
               <span className="font-bold">{message.role}: </span>
               <span>{message.content}</span>
