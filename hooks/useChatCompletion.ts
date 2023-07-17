@@ -126,7 +126,7 @@ export function useChatCompletion(
         body: JSON.stringify(reqJson),
       });
 
-      if (!response.body) return setError('no response body');
+      if (!response.body) return;
 
       try {
         const reader = response.body.getReader();
