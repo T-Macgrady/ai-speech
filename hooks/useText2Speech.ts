@@ -88,7 +88,12 @@ export default function useText2Speech(
     [config],
   );
 
-  return { speak, isSpeeching, isSupportWebApi, langs };
+  const stop = useCallback(() => {
+    window.speechSynthesis?.cancel();
+    window.xfTTS?.stop();
+  }, []);
+
+  return { speak, isSpeeching, isSupportWebApi, langs, stop };
 }
 
 // check if support SpeechSynthesisUtterance
@@ -120,6 +125,7 @@ async function xfSpeak(text: string, options: TTSOptions = { lang: 'en-US' }) {
         reject();
       },
     });
+    window.xfTTS = tts;
     tts.start();
   });
 }

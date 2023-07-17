@@ -5,4 +5,5 @@ interface Window {
   webkitSpeechRecognition: any;
   speechSynthesis: any;
   GoogleTTS: any;
+  xfTTS: any;
 }

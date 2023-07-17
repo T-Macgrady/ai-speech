@@ -15,7 +15,7 @@ export default function RealTimeChat() {
 
   const [currentLang, setCurrentLang] = useState('en-US');
   const { completion, getCompletionStream } = useChatCompletion();
-  const { speak, isSpeeching } = useText2Speech();
+  const { speak, stop: stopText2Speech, isSpeeching } = useText2Speech();
 
   const vms = useRef<VMS>();
 
@@ -47,6 +47,8 @@ export default function RealTimeChat() {
     systemSay(
       '1.你作为一个人工智能助手，解决用户的各种问题；2.用户使用哪种语言提问你就使用对应语言回答，除非用户让你使用特定语言回答；3.每次响应最前面返回当前语言对应的 BCP 47 语言标签规范的lang，比如zh-CN、en-US，用<lang>标签包裹lang，之后是响应内容，示例：<lang>zh-CN</lang>中文响应',
     );
+    getCompletionAndSpeak('hello');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [systemSay]);
 
   const {
@@ -253,6 +255,54 @@ export default function RealTimeChat() {
           videoStart ? 'mt-40 opacity-70' : ''
         }`}
       >
+        <h2 className="font-bold mb-1">语音识别</h2>
+        <p>isTranscribing: {String(isTranscribing)}</p>
+        {/* <p>isSpeaking: {String(isSpeaking)}</p> */}
+        <p className="text-blue-500">{recognizeText}</p>
+        <h2 className="font-bold mb-1">chatgpt补全</h2>
+        <p className="text-blue-500">{completion?.content}</p>
+        <h2 className="font-bold mb-1">语音合成</h2>
+        <p>isSpeeching: {String(isSpeeching)}</p>
+
+        <div className="mt-5 flex space-x-4">
+          <button
+            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
+            onClick={() => startSpeech2text()}
+          >
+            start
+          </button>
+          <button
+            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
+            onClick={() => {
+              stopSpeech2text();
+              stopText2Speech();
+            }}
+          >
+            stop
+          </button>
+          <button
+            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
+            onClick={() => {
+              getCompletionAndSpeak('hello');
+            }}
+          >
+            Hello
+          </button>
+        </div>
+
+        {/* <h2 className="text-2xl font-bold my-4">响应</h2>
+        <p>completion: {lastAssistantMessage}</p> */}
+
+        <h2 className="text-2xl font-bold my-4">历史</h2>
+        <ul>
+          {[...messageLog.slice(1)].reverse().map((message) => (
+            <li key={message.created} className="mb-2">
+              <span className="font-bold">{message.role}: </span>
+              <span>{message.content}</span>
+            </li>
+          ))}
+        </ul>
+
         <h2 className="font-bold mb-4">虚拟人</h2>
         {/* <p>video: {vmsVideo}</p> */}
         <p>初始化中: {String(!videoReady)}</p>
@@ -284,52 +334,7 @@ export default function RealTimeChat() {
           </button>
         </div>
 
-        <h2 className="font-bold mb-1">语音识别</h2>
-        <p>isTranscribing: {String(isTranscribing)}</p>
-        {/* <p>isSpeaking: {String(isSpeaking)}</p> */}
-        <p>recognizeText: {recognizeText}</p>
-        <h2 className="font-bold mb-1">chatgpt补全</h2>
-        <p>completionStream: {completion?.content}</p>
-        <h2 className="font-bold mb-1">语音合成</h2>
-        <p>isSpeeching: {String(isSpeeching)}</p>
-
-        <div className="mt-5 flex space-x-4">
-          <button
-            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
-            onClick={() => startSpeech2text()}
-          >
-            start
-          </button>
-          <button
-            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
-            onClick={() => stopSpeech2text()}
-          >
-            stop
-          </button>
-          <button
-            className="mb-5 bg-blue-500 text-white py-2 px-4 rounded"
-            onClick={() => {
-              getCompletionAndSpeak('hello');
-            }}
-          >
-            Hello
-          </button>
-        </div>
-
-        {/* <h2 className="text-2xl font-bold my-4">响应</h2>
-        <p>completion: {lastAssistantMessage}</p> */}
-
-        <h2 className="text-2xl font-bold my-4">历史</h2>
-        <ul>
-          {[...messageLog.slice(1)].reverse().map((message) => (
-            <li key={message.created} className="mb-2">
-              <span className="font-bold">{message.role}: </span>
-              <span>{message.content}</span>
-            </li>
-          ))}
-        </ul>
-
-        <h2 className="font-bold mb-4">chatgpt语音识别</h2>
+        {/* <h2 className="font-bold mb-4">chatgpt语音识别</h2>
 
         <p>Recording: {String(recording)}</p>
         <p>Transcribing: {String(transcribing)}</p>
@@ -354,7 +359,7 @@ export default function RealTimeChat() {
           >
             Stop
           </button>
-        </div>
+        </div> */}
       </div>
     </>
   );

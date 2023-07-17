@@ -36,8 +36,8 @@ const defaultConfig: ChatCompletionConfig = {
   stream: false,
 };
 const defaultUseConfig: UseChatCompletionConfig = {
-  url: 'https://api.chatanywhere.com.cn/v1',
-  apikey: 'sk-JaV54rjCdAskBUzHkI7ujNf8qWjANFEc0XmOJTZt3qPWWLAO',
+  url: 'https://api.chatanywhere.cn/v1',
+  apikey: 'sk-9apaEvwdnmyPnb3uMXx0oaCJzdB413ytPbmnoBb6j1yl89hI',
 };
 
 export function useChatCompletion(
