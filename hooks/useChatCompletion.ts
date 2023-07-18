@@ -47,7 +47,7 @@ export function useChatCompletion(config = {}, useConfig = {}) {
     () => ({ ...defaultConfig, ...config }),
     [config],
   );
-  const [error, setError] = useState();
+  const [isFetching, setIsFetching] = useState(false);
   const [completion, setCompletion] = useState<{
     content: string;
     created: number;
@@ -75,24 +75,28 @@ export function useChatCompletion(config = {}, useConfig = {}) {
         ],
         ..._config,
       };
-      const response = await fetch(`${url}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apikey}`,
-        },
-        body: JSON.stringify(reqJson),
-      });
-      const data = (await response.json()) || {};
-      console.log('--getCompletion-- ', reqJson, data);
-      if (data.error) {
-        setError(data.error);
-        return;
+      setIsFetching(true);
+      try {
+        const response = await fetch(`${url}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apikey}`,
+          },
+          body: JSON.stringify(reqJson),
+        });
+        const data = (await response.json()) || {};
+        console.log('--getCompletion-- ', reqJson, data);
+
+        const content = data?.choices[0]?.message?.content || '';
+        const resData = { created: data.created, content };
+        setCompletion(resData);
+        return resData;
+      } catch (error) {
+        console.log('--getCompletion-error-- ', error);
+      } finally {
+        setIsFetching(false);
       }
-      const content = data?.choices[0]?.message?.content || '';
-      const resData = { created: data.created, content };
-      setCompletion(resData);
-      return resData;
     },
     [prompt, url, apikey, initConfig],
   );
@@ -117,6 +121,7 @@ export function useChatCompletion(config = {}, useConfig = {}) {
 
         stream: true,
       };
+      setIsFetching(true);
       const response = await fetch(`${url}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -181,6 +186,7 @@ export function useChatCompletion(config = {}, useConfig = {}) {
       } catch (error) {
         console.error('--getCompletionStream-error-- ', error);
       } finally {
+        setIsFetching(false);
         completionStream.current = {
           content: '',
           created: -1,
@@ -198,7 +204,7 @@ export function useChatCompletion(config = {}, useConfig = {}) {
   }, [prompt, initConfig.stream]);
 
   return {
-    error,
+    isFetching,
     completion,
     getCompletion,
     getCompletionStream,
