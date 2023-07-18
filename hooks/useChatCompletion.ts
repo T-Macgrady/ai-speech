@@ -37,16 +37,16 @@ const defaultConfig: ChatCompletionConfig = {
 };
 const defaultUseConfig: UseChatCompletionConfig = {
   url: 'https://api.chatanywhere.cn/v1',
-  apikey: 'sk-9apaEvwdnmyPnb3uMXx0oaCJzdB413ytPbmnoBb6j1yl89hI',
+  apikey: 'sk-JaV54rjCdAskBUzHkI7ujNf8qWjANFEc0XmOJTZt3qPWWLAO',
 };
 
-export function useChatCompletion(
-  config = defaultConfig,
-  useConfig = defaultUseConfig,
-) {
-  const { url, apikey } = useConfig;
+export function useChatCompletion(config = {}, useConfig = {}) {
+  const { url, apikey } = { ...defaultUseConfig, ...useConfig };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { prompt, ...initConfig } = useMemo(() => config, []);
+  const { prompt, ...initConfig } = useMemo(
+    () => ({ ...defaultConfig, ...config }),
+    [config],
+  );
   const [error, setError] = useState();
   const [completion, setCompletion] = useState<{
     content: string;
@@ -194,7 +194,8 @@ export function useChatCompletion(
     if (prompt) {
       initConfig.stream ? getCompletionStream(prompt) : getCompletion(prompt);
     }
-  }, [prompt, getCompletion, initConfig.stream, getCompletionStream]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prompt, initConfig.stream]);
 
   return {
     error,
