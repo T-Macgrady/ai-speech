@@ -10,12 +10,14 @@ export interface VoiceRecognitionResults {
 const useSpeech2Text = ({
   lang = '',
   autoStart = false,
+  continuous = true,
   onRecognize,
   onRecognizeEnd,
   onEnd,
 }: {
   lang?: string;
   autoStart?: boolean;
+  continuous?: boolean;
   timeout?: number;
   onRecognize?: (value: string, event) => void;
   onRecognizeEnd?: (value: string) => void;
@@ -24,14 +26,12 @@ const useSpeech2Text = ({
 }) => {
   const error = useRef<SpeechRecognitionError>();
   const voiceRecognition = useRef<SpeechRecognition>();
-  const timer = useRef<number>();
+  const shouldStop = useRef(false);
 
   const [text, setText] = useState('');
   const [isTranscribing, setIsTranscribing] = useState(false);
 
   const init = useCallback(() => {
-    setIsTranscribing(true);
-
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     voiceRecognition.current = new SpeechRecognition();
@@ -64,11 +64,13 @@ const useSpeech2Text = ({
     voiceRecognition.current!.onend = () => {
       console.log('--voiceRecognition.current.onend--', text, error.current);
       setIsTranscribing(false);
-      if (onEnd) {
-        onEnd(text, error.current);
-      } else {
-        voiceRecognition.current!.start();
+      if (continuous && !shouldStop.current) {
+        voiceRecognition.current?.start();
       }
+
+      shouldStop.current = false;
+
+      onEnd?.(text, error.current);
     };
 
     voiceRecognition.current!.onaudioend = (e) => {
@@ -100,7 +102,7 @@ const useSpeech2Text = ({
     };
 
     voiceRecognition.current!.start();
-  }, [lang, onEnd, onRecognize, onRecognizeEnd, text]);
+  }, [continuous, lang, onEnd, onRecognize, onRecognizeEnd, text]);
 
   const start = useCallback(() => {
     voiceRecognition.current ? voiceRecognition.current?.start() : init();
@@ -109,7 +111,7 @@ const useSpeech2Text = ({
     voiceRecognition.current?.abort();
   };
   const stop = () => {
-    console.log('--voiceRecognition.stop--');
+    shouldStop.current = true;
     voiceRecognition.current?.stop();
   };
 

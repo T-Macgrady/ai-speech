@@ -64,9 +64,9 @@ export default function RealTimeChat() {
 
       startSpeech2text();
     },
-    onEnd(text, e) {
-      e?.error === 'no-speech' ? startSpeech2text() : stopSpeech2text();
-    },
+    // onEnd(text, e) {
+    //   e?.error === 'no-speech' ? startSpeech2text() : stopSpeech2text();
+    // },
   });
 
   const {
