@@ -4,7 +4,7 @@ import { FaMicrophone, FaSpinner, FaStop } from 'react-icons/fa';
 
 interface RecordButtonProps {
   isTranscribing: boolean;
-  isSpeeching: boolean;
+  isSpeeching?: boolean;
   isFetching: boolean;
   onStart: () => void;
   onStop: () => void;

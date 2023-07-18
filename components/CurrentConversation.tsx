@@ -1,4 +1,3 @@
-// 当前对话组件
 interface CurrentConversationProps {
   currentCompletion: { content: string } | null;
   recognizeText: string;
@@ -9,20 +8,19 @@ export default function CurrentConversation({
   recognizeText,
 }: CurrentConversationProps) {
   return (
-    <div>
-      <p className="text-blue-500 mb-2 text-center mt-2">{recognizeText}</p>
-      {currentCompletion?.content && (
-        <div className="mb-4 flex-grow flex flex-col justify-center items-center">
-          <h2 className="text-2xl font-bold mb-2">AI</h2>
-          <div className="flex flex-col w-full max-w-lg bg-white rounded shadow-lg overflow-y-auto transition-all duration-300 ease-in-out transform hover:scale-105">
-            <div className="p-4">
-              <div className="text-blue-500 font-bold">
+    <div className="flex flex-col items-center justify-center h-full">
+      <div className="w-full max-w-lg">
+        {currentCompletion?.content && (
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
+            <div className="px-6 py-4">
+              <p className="text-yellow-400 text-base">
                 {currentCompletion.content}
-              </div>
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+        <p className="text-blue-500 text-center text-lg">{recognizeText}</p>
+      </div>
     </div>
   );
 }

@@ -16,11 +16,11 @@ const fillPromptCNtoEN = (prompt) =>
   `将中文翻译为英文，要求语法准确，语句通顺，语气自然，直接返回翻译结果：${prompt}`;
 
 const SimultaneousInterpretation = () => {
-  const [lang, setLang] = useState('en-CN');
+  const [lang, setLang] = useState('en-US');
   const { messageLog, userSay, assistantSay, reset } = useMessageLog();
   const { isFetching, getCompletionStream } = useChatCompletion();
 
-  const fillPrompt = lang === 'en-CN' ? fillPromptENtoCN : fillPromptCNtoEN;
+  const fillPrompt = lang === 'en-US' ? fillPromptENtoCN : fillPromptCNtoEN;
   const getCompletionAndSay = useCallback(
     async (text) => {
       userSay(text);
@@ -46,7 +46,8 @@ const SimultaneousInterpretation = () => {
   const toggleLang = () => {
     stopSpeech2Text();
     reset();
-    setLang(lang === 'en-CN' ? 'cn-EN' : 'en-CN');
+    setLang(lang === 'en-US' ? 'zh-CN' : 'en-US');
+    startSpeech2Text();
   };
 
   const { completion: currentCompletion } = useChatCompletion({
@@ -74,7 +75,7 @@ const SimultaneousInterpretation = () => {
             className="mb-4 bg-green-200 hover:bg-green-300  text-sm text-gray-800 font-bold p-2 rounded transition-all duration-300 ease-in-out transform hover:scale-105 shadow-md flex items-center"
           >
             <FaExchangeAlt className="mr-2" />
-            {lang === 'en-CN' ? '英译中' : '中译英'}
+            {lang === 'en-US' ? '英译中' : '中译英'}
           </button>
 
           {/* Button */}
