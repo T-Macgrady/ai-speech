@@ -1,34 +1,37 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## Introduction
 
-## Getting Started
+ChatGPT 语音助手，developing...
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+- 语音识别
+- chatgpt补全
+- 语音生成
+- 数字人
+- 中英同传
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- [SpeechRecognition](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition): 语音识别 web api
+- [whisper](https://openai.com/research/whisper) openai 语音识别
+- [openai](https://platform.openai.com/docs/api-reference/chat): 对话补全、翻译
+- [SpeechSynthesisUtterance](https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesisUtterance) 语音合成 web api
+- [xfyun](https://www.xfyun.cn/doc/tts/online_tts/API.html#%E6%8E%A5%E5%8F%A3%E8%AF%B4%E6%98%8E) 讯飞语音合成
+- [VMS](https://www.xfyun.cn/doc/tts/virtual_human/Web-SDK.html) 讯飞虚拟人
+- [Next.js](https://nextjs.org/): Static site builds and routing
+- [Tailwind](https://tailwindcss.com/): Adaptive CSS page styling
+- [netlify](https://app.netlify.com/): automatic deployments
+- [github copilot](https://github.com/features/copilot)：页面UI
+- [tgpt-dev](https://github.com/T-Macgrady/tgpt-dev)：generate md
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## DEMO
 
-## Learn More
+- [chatgpt 语音助手](https://tmachatai.netlify.app/aichat)
 
-To learn more about Next.js, take a look at the following resources:
+- [中英同传](https://tmachatai.netlify.app/SimultaneousInterpretation)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Web api兼容性
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- 语音识别: [https://caniuse.com/?search=SpeechRecognition](https://caniuse.com/?search=SpeechRecognition)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- 语音合成: [https://caniuse.com/?search=SpeechSynthesisUtterance](https://caniuse.com/?search=SpeechSynthesisUtterance)
