@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useRef, useState } from 'react';
 
-type Message = {
+export type Message = {
   role: 'system' | 'user' | 'assistant';
   content?: string;
   name?: string;
